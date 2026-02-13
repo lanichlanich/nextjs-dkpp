@@ -1,0 +1,10 @@
+{
+  "Pegawai": {
+    "canManageNews": true,
+    "canManageUsers": false
+  },
+  "Admin": {
+    "canManageNews": true,
+    "canManageUsers": true
+  }
+}

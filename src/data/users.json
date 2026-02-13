@@ -1,0 +1,42 @@
+[
+  {
+    "id": "1",
+    "name": "admin@dkpp.id",
+    "email": "admin@dkpp.id",
+    "password": "admin@dkpp.id",
+    "role": "Admin",
+    "createdAt": "2024-01-01"
+  },
+  {
+    "name": "user1",
+    "email": "user1@user1.com",
+    "password": "user1@user1.com",
+    "role": "Pegawai",
+    "id": "1770999115192",
+    "createdAt": "2026-02-13"
+  },
+  {
+    "name": "admin2@admin2.com",
+    "email": "admin2@admin2.com",
+    "password": "admin2@admin2.com",
+    "role": "Admin",
+    "id": "1770999590753",
+    "createdAt": "2026-02-13"
+  },
+  {
+    "name": "useruser@user.com",
+    "email": "useruser@user.com",
+    "password": "useruser@user.com",
+    "role": "Pegawai",
+    "id": "1770999609069",
+    "createdAt": "2026-02-13"
+  },
+  {
+    "id": "1771000236252",
+    "name": "adminbaru",
+    "email": "adminbaru@adminbaru.com",
+    "password": "adminbaru@adminbaru.com",
+    "role": "Admin",
+    "createdAt": "2026-02-13"
+  }
+]
