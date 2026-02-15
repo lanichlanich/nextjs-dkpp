@@ -3,6 +3,8 @@ import { getDocumentsByEmployee, EmployeeDocument } from "@/lib/history";
 import { getPositions } from "@/lib/positions";
 import { HistoryManagement } from "@/components/HistoryManagement";
 
+export const dynamic = 'force-dynamic';
+
 export default async function HistoryPage() {
     const employees = await getEmployees();
     const positions = await getPositions();

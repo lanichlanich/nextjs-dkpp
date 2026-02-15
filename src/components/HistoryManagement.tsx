@@ -524,7 +524,7 @@ export function HistoryManagement({ employees, initialDocuments, positions }: Hi
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <a
-                                                href={doc.filePath}
+                                                href={doc.filePath.startsWith('http') ? `/api/view-file?url=${encodeURIComponent(doc.filePath)}` : doc.filePath}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
