@@ -35,9 +35,36 @@ export interface DocumentInput {
     fileName: string;
 }
 
+/**
+ * Get all employee documents from the database
+ */
+export async function getAllDocuments(): Promise<EmployeeDocument[]> {
+    try {
+        const documents = await prisma.employeeDocument.findMany({
+            include: {
+                position: {
+                    select: {
+                        id: true,
+                        namaJabatan: true,
+                        jenisJabatan: true
+                    }
+                }
+            },
+            orderBy: [
+                { documentType: 'asc' },
+                { tanggalSurat: 'desc' }
+            ]
+        });
+        return documents as unknown as EmployeeDocument[];
+    } catch (error: any) {
+        console.error("Error fetching all documents:", error);
+        throw error;
+    }
+}
+
 export async function getDocumentsByEmployee(employeeId: string): Promise<EmployeeDocument[]> {
     try {
-        const documents = await (prisma as any).employeeDocument.findMany({
+        const documents = await prisma.employeeDocument.findMany({
             where: { employeeId },
             include: {
                 position: {
@@ -53,7 +80,7 @@ export async function getDocumentsByEmployee(employeeId: string): Promise<Employ
                 { tanggalSurat: 'desc' }
             ]
         });
-        return documents;
+        return documents as unknown as EmployeeDocument[];
     } catch (error: any) {
         console.error("Error fetching documents:", error);
         throw error;
@@ -62,10 +89,10 @@ export async function getDocumentsByEmployee(employeeId: string): Promise<Employ
 
 export async function saveDocument(data: DocumentInput): Promise<EmployeeDocument> {
     try {
-        let result: EmployeeDocument;
+        let result: any;
         if (data.id) {
             // Update existing document
-            result = await (prisma as any).employeeDocument.update({
+            result = await prisma.employeeDocument.update({
                 where: { id: data.id },
                 data: {
                     nomorSurat: data.nomorSurat || null,
@@ -83,7 +110,7 @@ export async function saveDocument(data: DocumentInput): Promise<EmployeeDocumen
             });
         } else {
             // Create new document
-            result = await (prisma as any).employeeDocument.create({
+            result = await prisma.employeeDocument.create({
                 data: {
                     employeeId: data.employeeId,
                     documentType: data.documentType,
@@ -107,7 +134,7 @@ export async function saveDocument(data: DocumentInput): Promise<EmployeeDocumen
             await syncEmployeePositionWithLatestSK(data.employeeId);
         }
 
-        return result;
+        return result as EmployeeDocument;
     } catch (error: any) {
         console.error("Error saving document:", error);
         throw error;
@@ -119,7 +146,7 @@ export async function deleteDocument(id: string): Promise<void> {
         // Get the document first to know the employeeId and type
         const doc = await getDocumentById(id);
 
-        await (prisma as any).employeeDocument.delete({
+        await prisma.employeeDocument.delete({
             where: { id }
         });
 
@@ -135,13 +162,13 @@ export async function deleteDocument(id: string): Promise<void> {
 
 export async function getDocumentById(id: string): Promise<EmployeeDocument | null> {
     try {
-        const document = await (prisma as any).employeeDocument.findUnique({
+        const document = await prisma.employeeDocument.findUnique({
             where: { id },
             include: {
                 position: true
             }
         });
-        return document;
+        return document as unknown as EmployeeDocument;
     } catch (error: any) {
         console.error("Error fetching document:", error);
         throw error;
@@ -151,7 +178,7 @@ export async function getDocumentById(id: string): Promise<EmployeeDocument | nu
 export async function syncEmployeePositionWithLatestSK(employeeId: string): Promise<void> {
     try {
         // Find the SK_JABATAN with the latest TMT (tanggalMulai)
-        const latestSK = await (prisma as any).employeeDocument.findFirst({
+        const latestSK = await prisma.employeeDocument.findFirst({
             where: {
                 employeeId,
                 documentType: 'SK_JABATAN',
@@ -165,7 +192,7 @@ export async function syncEmployeePositionWithLatestSK(employeeId: string): Prom
 
         if (latestSK && latestSK.positionId) {
             // Update the employee's position
-            await (prisma as any).employee.update({
+            await prisma.employee.update({
                 where: { id: employeeId },
                 data: { positionId: latestSK.positionId }
             });
