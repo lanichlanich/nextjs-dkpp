@@ -8,45 +8,55 @@ import { uploadToServer } from "@/lib/upload";
 
 export async function saveDocumentAction(formData: FormData) {
     try {
-        // Extract file
-        const file = formData.get('file') as File;
-        if (!file) {
+        const documentId = formData.get('documentId') as string | null;
+        const employeeId = formData.get('employeeId') as string;
+        const documentType = formData.get('documentType') as string;
+        const fileName = formData.get('fileName') as string;
+
+        let existingDoc = null;
+        if (documentId) {
+            existingDoc = await getDocumentById(documentId);
+        }
+
+        // Extract file (optional for edit)
+        const file = formData.get('file') as File | null;
+        let fileUrl = existingDoc?.filePath || "";
+
+        if (file && file.size > 0) {
+            // Validate file type
+            if (file.type !== 'application/pdf') {
+                return { error: "File harus berformat PDF" };
+            }
+
+            // Validate file size (max 2MB)
+            const maxSize = 2 * 1024 * 1024;
+            if (file.size > maxSize) {
+                return { error: "Ukuran file maksimal 2MB" };
+            }
+
+            // Save file to Custom Server
+            const bytes = await file.arrayBuffer();
+            const buffer = Buffer.from(bytes);
+            fileUrl = await uploadToServer(buffer, fileName, file.type);
+        } else if (!existingDoc) {
             return { error: "File tidak ditemukan" };
         }
 
-        // Validate file type
-        if (file.type !== 'application/pdf') {
-            return { error: "File harus berformat PDF" };
-        }
-
-        // Validate file size (max 1MB)
-        const maxSize = 1 * 1024 * 1024;
-        if (file.size > maxSize) {
-            return { error: "Ukuran file maksimal 1MB" };
-        }
-
         // Extract other form data
-        const employeeId = formData.get('employeeId') as string;
-        const documentType = formData.get('documentType') as string;
         const nomorSurat = formData.get('nomorSurat') as string;
         const tanggalSuratStr = formData.get('tanggalSurat') as string;
         const tanggalMulaiStr = formData.get('tanggalMulai') as string;
         const tahunSKP = formData.get('tahunSKP') as string;
         const predikat = formData.get('predikat') as string;
         const positionId = formData.get('positionId') as string;
-        const fileName = formData.get('fileName') as string;
 
         // Parse dates only if they exist
         const tanggalSurat = tanggalSuratStr ? new Date(tanggalSuratStr) : undefined;
         const tanggalMulai = tanggalMulaiStr ? new Date(tanggalMulaiStr) : undefined;
 
-        // Save file to Custom Server
-        const bytes = await file.arrayBuffer();
-        const buffer = Buffer.from(bytes);
-        const fileUrl = await uploadToServer(buffer, fileName, file.type);
-
         // Save to database
         const result = await saveDocument({
+            id: documentId || undefined,
             employeeId,
             documentType: documentType as any,
             nomorSurat: nomorSurat || undefined,
@@ -56,7 +66,7 @@ export async function saveDocumentAction(formData: FormData) {
             predikat: predikat || undefined,
             positionId: positionId || undefined,
             filePath: fileUrl,
-            fileName
+            fileName: fileName || existingDoc?.fileName || ""
         });
 
         revalidatePath("/admin/history");

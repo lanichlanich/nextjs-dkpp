@@ -19,7 +19,8 @@ import {
     ArrowRight,
     Loader2,
     Calendar,
-    Briefcase
+    Briefcase,
+    Edit
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Swal from "sweetalert2";
@@ -32,8 +33,11 @@ interface HistoryManagementProps {
 }
 
 export function HistoryManagement({ employees, initialDocuments, positions }: HistoryManagementProps) {
+    const [searchTerm, setSearchTerm] = useState('');
     const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
     const [showUploadModal, setShowUploadModal] = useState(false);
+    const [editingDocument, setEditingDocument] = useState<EmployeeDocument | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [documentType, setDocumentType] = useState<'SK_CPNS' | 'SK_PNS' | 'SK_PPPK' | 'SKP' | 'SK_JABATAN' | null>(null);
     const [formData, setFormData] = useState({
         nomorSurat: '',
@@ -44,8 +48,7 @@ export function HistoryManagement({ employees, initialDocuments, positions }: Hi
         positionId: ''
     });
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
+
 
     const selectedEmployee = useMemo(() =>
         employees.find(e => e.id === selectedEmployeeId) || null,
@@ -97,19 +100,26 @@ export function HistoryManagement({ employees, initialDocuments, positions }: Hi
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedEmployee || !documentType || !selectedFile) {
+        if (!selectedEmployee || !documentType || (!selectedFile && !editingDocument)) {
             Swal.fire('Error', 'Lengkapi semua field', 'error');
             return;
         }
 
         setIsSubmitting(true);
         try {
-            const fileName = generateFileName();
+            const fileName = selectedFile ? generateFileName() : editingDocument?.fileName || '';
             const formDataToSend = new FormData();
-            formDataToSend.append('file', selectedFile);
+
+            if (selectedFile) {
+                formDataToSend.append('file', selectedFile);
+            }
             formDataToSend.append('employeeId', selectedEmployee.id);
             formDataToSend.append('documentType', documentType);
             formDataToSend.append('fileName', fileName);
+
+            if (editingDocument) {
+                formDataToSend.append('documentId', editingDocument.id);
+            }
 
             if (documentType === 'SKP') {
                 formDataToSend.append('tahunSKP', formData.tahunSKP);
@@ -131,7 +141,7 @@ export function HistoryManagement({ employees, initialDocuments, positions }: Hi
                 Swal.fire({
                     icon: 'success',
                     title: 'Berhasil',
-                    text: 'Dokumen berhasil disimpan',
+                    text: `Dokumen berhasil di${editingDocument ? 'perbarui' : 'simpan'}`,
                     toast: true,
                     position: 'top-end',
                     showConfirmButton: false,
@@ -141,6 +151,7 @@ export function HistoryManagement({ employees, initialDocuments, positions }: Hi
                 setSelectedFile(null);
                 setShowUploadModal(false);
                 setDocumentType(null);
+                setEditingDocument(null);
                 window.location.reload();
             }
         } catch (error) {
@@ -148,6 +159,21 @@ export function HistoryManagement({ employees, initialDocuments, positions }: Hi
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const handleEdit = (doc: EmployeeDocument) => {
+        setEditingDocument(doc);
+        setDocumentType(doc.documentType);
+        setFormData({
+            nomorSurat: doc.nomorSurat || '',
+            tanggalSurat: doc.tanggalSurat ? new Date(doc.tanggalSurat).toISOString().split('T')[0] : '',
+            tanggalMulai: doc.tanggalMulai ? new Date(doc.tanggalMulai).toISOString().split('T')[0] : '',
+            tahunSKP: doc.tahunSKP || '',
+            predikat: doc.predikat || '',
+            positionId: doc.positionId || ''
+        });
+        setSelectedFile(null); // Clear selected file when editing
+        setShowUploadModal(true);
     };
 
     const handleDelete = async (id: string, fileName: string) => {
@@ -266,7 +292,13 @@ export function HistoryManagement({ employees, initialDocuments, positions }: Hi
                                     </div>
                                 </div>
                                 <button
-                                    onClick={() => setShowUploadModal(true)}
+                                    onClick={() => {
+                                        setEditingDocument(null);
+                                        setDocumentType(null);
+                                        setFormData({ nomorSurat: '', tanggalSurat: '', tanggalMulai: '', tahunSKP: '', predikat: '', positionId: '' });
+                                        setSelectedFile(null);
+                                        setShowUploadModal(true);
+                                    }}
                                     className="flex items-center gap-2 bg-gray-900 hover:bg-black text-white px-6 py-3 rounded-2xl font-black text-sm uppercase tracking-wider transition-all shadow-xl shadow-gray-200 active:scale-95"
                                 >
                                     <Plus className="w-4 h-4" />
@@ -325,6 +357,13 @@ export function HistoryManagement({ employees, initialDocuments, positions }: Hi
                                                                 </div>
                                                             </div>
                                                             <div className="flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                <button
+                                                                    onClick={() => handleEdit(doc)}
+                                                                    className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-xl transition-all"
+                                                                    title="Edit"
+                                                                >
+                                                                    <Edit className="w-5 h-5" />
+                                                                </button>
                                                                 <a
                                                                     href={doc.filePath.startsWith('http') ? `/api/view-file?url=${encodeURIComponent(doc.filePath)}` : doc.filePath}
                                                                     target="_blank"
@@ -393,9 +432,14 @@ export function HistoryManagement({ employees, initialDocuments, positions }: Hi
                             className="relative w-full max-w-xl bg-white rounded-[32px] shadow-2xl overflow-hidden"
                         >
                             <div className="p-6 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
-                                <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">Tambah Dokumen</h3>
+                                <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">
+                                    {editingDocument ? 'Edit Dokumen' : 'Tambah Dokumen'}
+                                </h3>
                                 <button
-                                    onClick={() => setShowUploadModal(false)}
+                                    onClick={() => {
+                                        setShowUploadModal(false);
+                                        setEditingDocument(null);
+                                    }}
                                     className="p-2 hover:bg-gray-200 rounded-full transition-colors"
                                 >
                                     <X className="w-5 h-5" />
@@ -421,6 +465,7 @@ export function HistoryManagement({ employees, initialDocuments, positions }: Hi
                                                     ? 'bg-green-600 border-green-600 text-white shadow-lg shadow-green-100 scale-[1.02]'
                                                     : 'bg-white border-gray-100 text-gray-600 hover:border-gray-200'
                                                     }`}
+                                                disabled={!!editingDocument} // Disable type change when editing
                                             >
                                                 {label}
                                             </button>
@@ -525,15 +570,21 @@ export function HistoryManagement({ employees, initialDocuments, positions }: Hi
                                                     accept=".pdf"
                                                     onChange={handleFileChange}
                                                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                                                    required
+                                                    required={!editingDocument}
                                                 />
-                                                <div className={`p-6 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center transition-all ${selectedFile ? 'bg-green-50 border-green-300' : 'bg-gray-50 border-gray-200 group-hover/file:bg-gray-100'
+                                                <div className={`p-6 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center transition-all ${selectedFile || editingDocument ? 'bg-green-50 border-green-300' : 'bg-gray-50 border-gray-200 group-hover/file:bg-gray-100'
                                                     }`}>
                                                     {selectedFile ? (
                                                         <>
                                                             <FileCheck className="w-8 h-8 text-green-600 mb-2" />
                                                             <p className="text-sm font-black text-green-900 truncate max-w-xs">{selectedFile.name}</p>
                                                             <p className="text-[10px] font-bold text-green-600">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                                                        </>
+                                                    ) : editingDocument ? (
+                                                        <>
+                                                            <FileCheck className="w-8 h-8 text-blue-600 mb-2" />
+                                                            <p className="text-sm font-black text-blue-900 truncate max-w-xs">{editingDocument.fileName}</p>
+                                                            <p className="text-[10px] font-bold text-blue-600 text-center">Gunakan file saat ini atau<br />upload baru untuk mengganti</p>
                                                         </>
                                                     ) : (
                                                         <>
