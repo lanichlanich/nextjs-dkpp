@@ -14,6 +14,16 @@ services:
     ports:
       - "3306:3306"
 
+  app:
+    build: .
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: mysql://user:userpassword@db:3306/mydatabase
+    depends_on:
+      - db
+
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     restart: always
@@ -23,6 +33,6 @@ services:
       PMA_PASSWORD: userpassword
     ports:
       - "8080:80"
-  
+
 volumes:
   db_data:
