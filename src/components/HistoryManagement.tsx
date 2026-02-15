@@ -195,7 +195,7 @@ export function HistoryManagement({ employees, initialDocuments, positions }: Hi
                             placeholder="Cari NIP atau Nama..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all text-sm font-medium"
+                            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all text-sm font-medium text-gray-900"
                         />
                     </div>
                 </div>
@@ -206,8 +206,8 @@ export function HistoryManagement({ employees, initialDocuments, positions }: Hi
                             key={emp.id}
                             onClick={() => setSelectedEmployeeId(emp.id)}
                             className={`w-full text-left p-4 rounded-2xl transition-all duration-200 group relative ${selectedEmployeeId === emp.id
-                                    ? 'bg-green-600 text-white shadow-lg shadow-green-200'
-                                    : 'hover:bg-gray-50 text-gray-700'
+                                ? 'bg-green-600 text-white shadow-lg shadow-green-200'
+                                : 'hover:bg-gray-50 text-gray-700'
                                 }`}
                         >
                             <div className="flex items-center justify-between">
@@ -418,8 +418,8 @@ export function HistoryManagement({ employees, initialDocuments, positions }: Hi
                                                 type="button"
                                                 onClick={() => setDocumentType(type as any)}
                                                 className={`p-3 rounded-xl border-2 font-bold text-sm transition-all text-center ${documentType === type
-                                                        ? 'bg-green-600 border-green-600 text-white shadow-lg shadow-green-100 scale-[1.02]'
-                                                        : 'bg-white border-gray-100 text-gray-600 hover:border-gray-200'
+                                                    ? 'bg-green-600 border-green-600 text-white shadow-lg shadow-green-100 scale-[1.02]'
+                                                    : 'bg-white border-gray-100 text-gray-600 hover:border-gray-200'
                                                     }`}
                                             >
                                                 {label}
@@ -443,7 +443,7 @@ export function HistoryManagement({ employees, initialDocuments, positions }: Hi
                                                         value={formData.tahunSKP}
                                                         onChange={(e) => setFormData({ ...formData, tahunSKP: e.target.value })}
                                                         placeholder="2024"
-                                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition-all font-bold"
+                                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition-all font-bold text-gray-900"
                                                         required
                                                     />
                                                 </div>
@@ -452,7 +452,7 @@ export function HistoryManagement({ employees, initialDocuments, positions }: Hi
                                                     <select
                                                         value={formData.predikat}
                                                         onChange={(e) => setFormData({ ...formData, predikat: e.target.value })}
-                                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition-all font-bold"
+                                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition-all font-bold text-gray-900"
                                                         required
                                                     >
                                                         <option value="">Pilih...</option>
@@ -471,7 +471,7 @@ export function HistoryManagement({ employees, initialDocuments, positions }: Hi
                                                             type="text"
                                                             value={formData.nomorSurat}
                                                             onChange={(e) => setFormData({ ...formData, nomorSurat: e.target.value })}
-                                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition-all font-bold"
+                                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition-all font-bold text-gray-900"
                                                             required
                                                         />
                                                     </div>
@@ -481,7 +481,7 @@ export function HistoryManagement({ employees, initialDocuments, positions }: Hi
                                                             <select
                                                                 value={formData.positionId}
                                                                 onChange={(e) => setFormData({ ...formData, positionId: e.target.value })}
-                                                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition-all font-bold"
+                                                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition-all font-bold text-gray-900"
                                                                 required
                                                             >
                                                                 <option value="">Pilih Jabatan...</option>
@@ -499,7 +499,7 @@ export function HistoryManagement({ employees, initialDocuments, positions }: Hi
                                                             type="date"
                                                             value={formData.tanggalSurat}
                                                             onChange={(e) => setFormData({ ...formData, tanggalSurat: e.target.value })}
-                                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition-all font-bold"
+                                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition-all font-bold text-gray-900"
                                                             required
                                                         />
                                                     </div>
@@ -509,7 +509,7 @@ export function HistoryManagement({ employees, initialDocuments, positions }: Hi
                                                             type="date"
                                                             value={formData.tanggalMulai}
                                                             onChange={(e) => setFormData({ ...formData, tanggalMulai: e.target.value })}
-                                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition-all font-bold"
+                                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition-all font-bold text-gray-900"
                                                             required
                                                         />
                                                     </div>
