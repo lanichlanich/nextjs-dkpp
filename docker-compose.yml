@@ -20,7 +20,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: mysql://user:userpassword@db:3306/mydatabase
+      DATABASE_URL: mysql://gwiujkgt_admin1:gwiujkgt_admin1@dkpp-imy.my.id:3306/gwiujkgt_dkpp1
     depends_on:
       - db
 
