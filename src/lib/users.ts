@@ -1,5 +1,4 @@
-import fs from "fs/promises";
-import path from "path";
+import prisma from "./prisma";
 
 export interface User {
     id: string;
@@ -7,41 +6,50 @@ export interface User {
     email: string;
     password?: string;
     role: "Admin" | "Pegawai";
-    createdAt: string;
+    createdAt: Date;
 }
-
-const usersFilePath = path.join(process.cwd(), "src/data/users.json");
 
 export async function getUsers(): Promise<User[]> {
     try {
-        const fileContent = await fs.readFile(usersFilePath, "utf8");
-        return JSON.parse(fileContent);
+        return await prisma.user.findMany({
+            orderBy: { createdAt: 'desc' }
+        }) as User[];
     } catch (error) {
         console.error("Error reading users:", error);
         return [];
     }
 }
 
-export async function saveUser(user: User): Promise<User> {
-    const users = await getUsers();
-    const existingIndex = users.findIndex((u) => u.id === user.id);
-
-    if (existingIndex >= 0) {
-        users[existingIndex] = { ...users[existingIndex], ...user };
+export async function saveUser(user: Partial<User> & { email: string }): Promise<User> {
+    const { id, ...data } = user;
+    if (id) {
+        return await prisma.user.update({
+            where: { id },
+            data: {
+                ...data,
+                role: data.role as string,
+            }
+        }) as User;
     } else {
-        users.push(user);
+        return await prisma.user.create({
+            data: {
+                name: data.name || '',
+                email: data.email,
+                password: data.password || '',
+                role: data.role || 'Pegawai',
+            }
+        }) as User;
     }
-
-    await fs.writeFile(usersFilePath, JSON.stringify(users, null, 2));
-    return user;
 }
 
 export async function deleteUser(id: string): Promise<boolean> {
-    const users = await getUsers();
-    const filteredUsers = users.filter((u) => u.id !== id);
-
-    if (users.length === filteredUsers.length) return false;
-
-    await fs.writeFile(usersFilePath, JSON.stringify(filteredUsers, null, 2));
-    return true;
+    try {
+        await prisma.user.delete({
+            where: { id }
+        });
+        return true;
+    } catch (error) {
+        console.error("Error deleting user:", error);
+        return false;
+    }
 }

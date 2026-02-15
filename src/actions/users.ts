@@ -60,13 +60,11 @@ export async function registerUserAction(formData: FormData) {
         }
     }
 
-    const newUser: User = {
-        id: Date.now().toString(),
+    const newUser = {
         name,
         email,
         password, // In a real app, hash this!
         role,
-        createdAt: new Date().toISOString().split("T")[0],
     };
 
     await saveUser(newUser);

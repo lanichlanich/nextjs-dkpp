@@ -20,6 +20,9 @@ export function Navbar() {
             <Link href="/" className="text-gray-700 hover:text-green-600 transition-colors font-medium">
               Beranda
             </Link>
+            <Link href="/profil" className="text-gray-700 hover:text-green-600 transition-colors font-medium">
+              Profil
+            </Link>
             <Link href="#services" className="text-gray-700 hover:text-green-600 transition-colors font-medium">
               Layanan
             </Link>
@@ -54,6 +57,13 @@ export function Navbar() {
               onClick={() => setIsOpen(false)}
             >
               Beranda
+            </Link>
+            <Link
+              href="/profil"
+              className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-green-600 hover:bg-gray-50"
+              onClick={() => setIsOpen(false)}
+            >
+              Profil
             </Link>
             <Link
               href="#services"

@@ -7,10 +7,13 @@ import {
     Newspaper,
     Users,
     Settings,
+    Shield,
     LogOut,
     Menu,
     X,
-    UserCircle
+    UserCircle,
+    Briefcase,
+    FileText
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -84,6 +87,30 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             href: "/admin/users",
             icon: Users,
             show: currentUser.role === "Admin" || (settings?.Pegawai.canManageUsers)
+        },
+        {
+            name: "Profil Dinas",
+            href: "/admin/profile",
+            icon: Shield,
+            show: currentUser.role === "Admin" || (settings?.Pegawai.canManageProfile)
+        },
+        {
+            name: "Daftar Pegawai",
+            href: "/admin/employees",
+            icon: Briefcase,
+            show: true
+        },
+        {
+            name: "Daftar Jabatan",
+            href: "/admin/positions",
+            icon: Briefcase,
+            show: true
+        },
+        {
+            name: "Daftar Riwayat",
+            href: "/admin/history",
+            icon: FileText,
+            show: true
         },
         {
             name: "Pengaturan",

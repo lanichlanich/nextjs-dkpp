@@ -20,6 +20,12 @@ export function Hero() {
                         Layanan Kami
                     </Link>
                     <Link
+                        href="/profil"
+                        className="px-8 py-3 rounded-full bg-green-600 text-white font-bold hover:bg-green-700 transition-colors shadow-lg"
+                    >
+                        Profil Kami
+                    </Link>
+                    <Link
                         href="#contact"
                         className="px-8 py-3 rounded-full bg-transparent border-2 border-white text-white font-bold hover:bg-white/10 transition-colors"
                     >

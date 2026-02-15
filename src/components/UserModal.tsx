@@ -42,7 +42,7 @@ export function UserModal({ isOpen, onClose, onSave, user }: UserModalProps) {
             await onSave({
                 ...formData,
                 id: user?.id || Date.now().toString(),
-                createdAt: user?.createdAt || new Date().toISOString().split("T")[0],
+                createdAt: user?.createdAt || new Date(),
             } as User);
             onClose();
         } catch (error) {

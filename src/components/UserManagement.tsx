@@ -178,7 +178,9 @@ export function UserManagement({ initialUsers, canManage = true }: UserManagemen
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-sm text-gray-600">
-                                            {user.createdAt}
+                                            {user.createdAt instanceof Date
+                                                ? user.createdAt.toLocaleDateString('id-ID')
+                                                : String(user.createdAt)}
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             {canManage ? (
