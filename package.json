@@ -13,6 +13,7 @@
     "@prisma/client": "^6.19.2",
     "@tailwindcss/typography": "^0.5.19",
     "framer-motion": "^12.34.0",
+    "googleapis": "^171.4.0",
     "jspdf": "^4.1.0",
     "jspdf-autotable": "^5.0.7",
     "lucide-react": "^0.564.0",
@@ -22,6 +23,7 @@
     "react-dom": "19.2.3",
     "react-quill-new": "^3.8.3",
     "recharts": "^3.7.0",
+    "ssh2-sftp-client": "^12.0.1",
     "sweetalert2": "^11.26.18",
     "sweetalert2-react-content": "^5.1.1",
     "xlsx": "^0.18.5"
@@ -31,6 +33,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/ssh2-sftp-client": "^9.0.6",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "prisma": "^6.19.2",

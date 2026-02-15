@@ -19,10 +19,11 @@
 
 # production
 /build
+.vercel
+.npm
 
 # misc
 .DS_Store
-*.pem
 
 # debug
 npm-debug.log*
