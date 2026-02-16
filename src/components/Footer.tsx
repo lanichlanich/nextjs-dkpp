@@ -21,10 +21,11 @@ export function Footer() {
                     <div id="contact">
                         <h3 className="text-xl font-bold mb-4 text-green-400">Kontak Kami</h3>
                         <ul className="space-y-2 text-gray-400">
-                            <li>Jl. Contoh No. 123, Indramayu</li>
-                            <li>Jawa Barat, Indonesia</li>
-                            <li>Email: info@dkpp-indramayu.go.id</li>
-                            <li>Telp: (0234) 123456</li>
+                            <li>Jl. Pasar Baru No. 445, Kelurahan Karangmalang</li>
+                            <li>Kecamatan Indramayu, Kabupaten Indramayu</li>
+                            <li>Jawa Barat 45213</li>
+                            <li>Email: dkppindramayu@gmail.com</li>
+                            <li>Telp: (0234) 272082</li>
                         </ul>
                     </div>
                 </div>

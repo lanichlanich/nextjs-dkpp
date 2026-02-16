@@ -6,6 +6,7 @@ import { Sprout, Tractor, Wheat, Users, ArrowRight } from "lucide-react";
 import { getNews } from "@/lib/news";
 import Link from "next/link";
 import { MotionWrapper } from "@/components/MotionWrapper";
+import { YouTubeVideos } from "@/components/YouTubeVideos";
 
 export const revalidate = 60; // Revalidate every 60 seconds
 
@@ -69,6 +70,9 @@ export default async function Home() {
             ))}
           </div>
         </section>
+
+        {/* YouTube Section */}
+        <YouTubeVideos />
 
         {/* News Section */}
         <section id="news" className="py-20 bg-white">

@@ -46,6 +46,7 @@ model Setting {
   canManageNews    Boolean
   canManageUsers   Boolean
   canManageProfile Boolean
+  canManageJdih    Boolean @default(false)
 }
 
 model Employee {
@@ -101,4 +102,20 @@ model EmployeeDocument {
   @@index([employeeId])
   @@index([documentType])
   @@index([positionId])
+}
+
+model JdihDocument {
+  id          String   @id @default(cuid())
+  title       String
+  type        String   // e.g., "Peraturan Daerah", "Peraturan Bupati", "Keputusan Bupati"
+  number      String
+  year        String
+  description String?  @db.Text
+  filePath    String?
+  fileName    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([type])
+  @@index([year])
 }

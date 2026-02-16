@@ -13,7 +13,8 @@ import {
     X,
     UserCircle,
     Briefcase,
-    FileText
+    FileText,
+    Scale
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -93,6 +94,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             href: "/admin/profile",
             icon: Shield,
             show: currentUser.role === "Admin" || (settings?.Pegawai.canManageProfile)
+        },
+        {
+            name: "JDIH Hukum",
+            href: "/admin/jdih",
+            icon: Scale,
+            show: currentUser.role === "Admin" || (settings?.Pegawai.canManageJdih)
         },
         {
             name: "Daftar Pegawai",

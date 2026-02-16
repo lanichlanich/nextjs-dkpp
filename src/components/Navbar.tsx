@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ChevronDown, Scale, ShoppingCart } from "lucide-react";
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isPriceOpen, setIsPriceOpen] = useState(false);
+  const [isMobilePriceOpen, setIsMobilePriceOpen] = useState(false);
 
   return (
     <nav className="bg-white shadow-md sticky top-0 z-50">
@@ -23,6 +25,43 @@ export function Navbar() {
             <Link href="/profil" className="text-gray-700 hover:text-green-600 transition-colors font-medium">
               Profil
             </Link>
+
+            {/* Harga Pangan Dropdown */}
+            <div
+              className="relative group"
+              onMouseEnter={() => setIsPriceOpen(true)}
+              onMouseLeave={() => setIsPriceOpen(false)}
+            >
+              <button
+                className="flex items-center gap-1 text-gray-700 hover:text-green-600 transition-colors font-medium h-16"
+                onClick={() => setIsPriceOpen(!isPriceOpen)}
+              >
+                Harga Pangan
+                <ChevronDown size={14} className={`transition-transform duration-200 ${isPriceOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isPriceOpen && (
+                <div className="absolute left-0 w-56 bg-white border border-gray-100 rounded-2xl shadow-2xl py-3 z-50 transition-all">
+                  <Link href="/harga/sayuran" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-green-50 hover:text-green-600 font-bold transition-colors">
+                    <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center text-green-600">
+                      <ShoppingCart size={16} />
+                    </div>
+                    Harga Sayuran
+                  </Link>
+                  <Link href="/harga/buah" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-green-50 hover:text-green-600 font-bold transition-colors">
+                    <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center text-orange-600">
+                      <ShoppingCart size={16} />
+                    </div>
+                    Harga Buah-buahan
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            <Link href="/jdih" className="text-gray-700 hover:text-green-600 transition-colors font-medium flex items-center gap-1">
+              JDIH
+            </Link>
+
             <Link href="#services" className="text-gray-700 hover:text-green-600 transition-colors font-medium">
               Layanan
             </Link>
@@ -65,6 +104,44 @@ export function Navbar() {
             >
               Profil
             </Link>
+
+            {/* Mobile Harga Pangan */}
+            <div>
+              <button
+                onClick={() => setIsMobilePriceOpen(!isMobilePriceOpen)}
+                className="w-full flex items-center justify-between px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-green-600 hover:bg-gray-50"
+              >
+                Harga Pangan
+                <ChevronDown size={18} className={`transition-transform ${isMobilePriceOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {isMobilePriceOpen && (
+                <div className="pl-6 space-y-1 mt-1 transition-all">
+                  <Link
+                    href="/harga/sayuran"
+                    className="block px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-green-600 hover:bg-gray-50"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    • Harga Sayuran
+                  </Link>
+                  <Link
+                    href="/harga/buah"
+                    className="block px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-green-600 hover:bg-gray-50"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    • Harga Buah-buahan
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            <Link
+              href="/jdih"
+              className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-green-600 hover:bg-gray-50"
+              onClick={() => setIsOpen(false)}
+            >
+              JDIH
+            </Link>
+
             <Link
               href="#services"
               className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-green-600 hover:bg-gray-50"

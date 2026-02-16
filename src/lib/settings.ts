@@ -4,6 +4,7 @@ export interface RolePermissions {
     canManageNews: boolean;
     canManageUsers: boolean;
     canManageProfile: boolean;
+    canManageJdih: boolean;
 }
 
 export interface SystemSettings {
@@ -19,14 +20,15 @@ export async function getSettings(): Promise<SystemSettings> {
                 canManageNews: s.canManageNews,
                 canManageUsers: s.canManageUsers,
                 canManageProfile: s.canManageProfile,
+                canManageJdih: s.canManageJdih,
             };
         });
         return settingsMap;
     } catch (error) {
         console.error("Error reading settings from DB:", error);
         return {
-            "Pegawai": { canManageNews: true, canManageUsers: false, canManageProfile: false },
-            "Admin": { canManageNews: true, canManageUsers: true, canManageProfile: true }
+            "Pegawai": { canManageNews: true, canManageUsers: false, canManageProfile: false, canManageJdih: false },
+            "Admin": { canManageNews: true, canManageUsers: true, canManageProfile: true, canManageJdih: true }
         };
     }
 }
