@@ -1,31 +1,63 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Position } from "@/lib/positions";
-import { Briefcase, Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Briefcase, Plus, Pencil, Trash2, Search, FileUp, FileDown, Download } from "lucide-react";
 import { PositionModal } from "./PositionModal";
+import { StandardPagination } from "./ui/StandardPagination";
 import { savePositionAction, deletePositionAction, importPositionsAction } from "@/actions/position-actions";
 import Swal from "sweetalert2";
 import { motion } from "framer-motion";
 import * as XLSX from 'xlsx';
-import { useRef } from "react";
-import { FileUp, FileDown, Download } from "lucide-react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
 interface PositionManagementProps {
     initialPositions: Position[];
 }
 
 export function PositionManagement({ initialPositions }: PositionManagementProps) {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const pathname = usePathname();
+
     const [positions, setPositions] = useState<Position[]>(initialPositions);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    // Pagination
+    const urlPage = parseInt(searchParams.get("page") || "1");
+    const [currentPage, setCurrentPage] = useState(urlPage);
+    const [itemsPerPage] = useState(10);
+
+    // Sync state with props when data is refreshed from server
+    useEffect(() => {
+        setPositions(initialPositions);
+    }, [initialPositions]);
+
+    // Sync URL with local pagination state
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("page", page.toString());
+        router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    };
+
     const filteredPositions = positions.filter(pos =>
         pos.namaJabatan.toLowerCase().includes(searchTerm.toLowerCase()) ||
         pos.jenisJabatan.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentItems = filteredPositions.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filteredPositions.length / itemsPerPage);
+
+    const handleSearchChange = (val: string) => {
+        setSearchTerm(val);
+        setCurrentPage(1);
+    };
 
     const handleAdd = () => {
         setSelectedPosition(null);
@@ -55,7 +87,8 @@ export function PositionManagement({ initialPositions }: PositionManagementProps
             timer: 3000
         });
 
-        window.location.reload();
+        router.refresh();
+        setIsModalOpen(false);
     };
 
     const handleDelete = async (position: Position) => {
@@ -85,7 +118,7 @@ export function PositionManagement({ initialPositions }: PositionManagementProps
                     showConfirmButton: false,
                     timer: 3000
                 });
-                window.location.reload();
+                router.refresh();
             }
         }
     };
@@ -227,7 +260,7 @@ export function PositionManagement({ initialPositions }: PositionManagementProps
                         type="text"
                         placeholder="Cari nama jabatan atau jenis..."
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onChange={(e) => handleSearchChange(e.target.value)}
                         className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-gray-900 font-medium"
                     />
                 </div>
@@ -307,7 +340,7 @@ export function PositionManagement({ initialPositions }: PositionManagementProps
                                     </td>
                                 </tr>
                             ) : (
-                                filteredPositions.map((position, index) => (
+                                currentItems.map((position, index) => (
                                     <motion.tr
                                         key={position.id}
                                         initial={{ opacity: 0, y: 20 }}
@@ -316,7 +349,7 @@ export function PositionManagement({ initialPositions }: PositionManagementProps
                                         className="hover:bg-blue-50/50 transition-colors"
                                     >
                                         <td className="px-6 py-4 text-sm text-gray-600 font-bold">
-                                            {index + 1}
+                                            {indexOfFirstItem + index + 1}
                                         </td>
                                         <td className="px-6 py-4 text-sm text-gray-900 font-bold">
                                             {position.namaJabatan}
@@ -359,6 +392,14 @@ export function PositionManagement({ initialPositions }: PositionManagementProps
                         </tbody>
                     </table>
                 </div>
+
+                <StandardPagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                    totalItems={filteredPositions.length}
+                    itemsPerPage={itemsPerPage}
+                />
             </div>
 
             {/* Modal */}

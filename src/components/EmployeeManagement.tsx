@@ -29,7 +29,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { StandardPagination } from "./ui/StandardPagination";
 
 interface EmployeeManagementProps {
     initialEmployees: EmployeeDisplay[];
@@ -37,6 +39,10 @@ interface EmployeeManagementProps {
 }
 
 export function EmployeeManagement({ initialEmployees, positions }: EmployeeManagementProps) {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const pathname = usePathname();
+
     const [employees, setEmployees] = useState<EmployeeDisplay[]>(initialEmployees);
     const [searchTerm, setSearchTerm] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -44,7 +50,21 @@ export function EmployeeManagement({ initialEmployees, positions }: EmployeeMana
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // New state for pagination, sorting, and filtering
-    const [currentPage, setCurrentPage] = useState(1);
+    const urlPage = parseInt(searchParams.get("page") || "1");
+    const [currentPage, setCurrentPage] = useState(urlPage);
+
+    // Sync state with props when data is refreshed from server
+    useEffect(() => {
+        setEmployees(initialEmployees);
+    }, [initialEmployees]);
+
+    // Sync URL with local pagination state
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("page", page.toString());
+        router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    };
     const [itemsPerPage] = useState(10);
     const [sortField, setSortField] = useState<"name" | "nip">("name");
     const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
@@ -104,7 +124,8 @@ export function EmployeeManagement({ initialEmployees, positions }: EmployeeMana
         if ("error" in result) {
             Swal.fire("Error", result.error, "error");
         } else {
-            window.location.reload();
+            router.refresh();
+            setIsModalOpen(false);
             Swal.fire({
                 icon: "success",
                 title: "Berhasil",
@@ -134,7 +155,7 @@ export function EmployeeManagement({ initialEmployees, positions }: EmployeeMana
             if (typeof deleteResult === "object" && "error" in deleteResult) {
                 Swal.fire("Error", deleteResult.error, "error");
             } else {
-                window.location.reload();
+                router.refresh();
             }
         }
     };
@@ -270,7 +291,7 @@ export function EmployeeManagement({ initialEmployees, positions }: EmployeeMana
             if ("error" in result) {
                 Swal.fire("Error", result.error, "error");
             } else {
-                window.location.reload();
+                router.refresh();
             }
         };
         reader.readAsArrayBuffer(file);
@@ -818,38 +839,14 @@ export function EmployeeManagement({ initialEmployees, positions }: EmployeeMana
                 </div>
 
                 {/* Pagination Controls */}
-                {totalPages > 1 && (
-                    <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/30 flex items-center justify-between">
-                        <div className="hidden sm:block">
-                            <p className="text-sm text-gray-700 font-medium">
-                                Menampilkan <span className="font-bold text-gray-900">{indexOfFirstItem + 1}</span> sampai{" "}
-                                <span className="font-bold text-gray-900">{Math.min(indexOfLastItem, sortedEmployees.length)}</span> dari{" "}
-                                <span className="font-bold text-gray-900">{sortedEmployees.length}</span> pegawai
-                            </p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <button
-                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                                disabled={currentPage === 1}
-                                className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl text-gray-700 font-bold hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm bg-white hover:text-green-600 active:scale-95"
-                            >
-                                <ChevronLeft className="w-4 h-4" />
-                                Sebelumnya
-                            </button>
-
-                            <div className="h-6 w-px bg-gray-100 mx-1" />
-
-                            <button
-                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                                disabled={currentPage === totalPages}
-                                className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl text-gray-700 font-bold hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm bg-white hover:text-green-600 active:scale-95"
-                            >
-                                Selanjutnya
-                                <ChevronRight className="w-4 h-4" />
-                            </button>
-                        </div>
-                    </div>
-                )}
+                <StandardPagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                    totalItems={filteredEmployees.length}
+                    itemsPerPage={itemsPerPage}
+                    color="green"
+                />
             </div>
 
             <EmployeeModal

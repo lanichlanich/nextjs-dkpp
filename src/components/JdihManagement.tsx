@@ -18,24 +18,45 @@ import {
 import { JdihDocument } from "@/lib/jdih";
 import { saveJdihAction, deleteJdihAction } from "@/actions/jdih";
 import { JdihModal } from "./JdihModal";
+import { StandardPagination } from "./ui/StandardPagination";
 import Swal from "sweetalert2";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useEffect } from "react";
 
 interface JdihManagementProps {
     initialDocuments: JdihDocument[];
 }
 
 export function JdihManagement({ initialDocuments }: JdihManagementProps) {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const pathname = usePathname();
+
     const [documents, setDocuments] = useState<JdihDocument[]>(initialDocuments);
     const [searchTerm, setSearchTerm] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingDocument, setEditingDocument] = useState<JdihDocument | null>(null);
 
     // Pagination & Filtering
-    const [currentPage, setCurrentPage] = useState(1);
+    const urlPage = parseInt(searchParams.get("page") || "1");
+    const [currentPage, setCurrentPage] = useState(urlPage);
     const [itemsPerPage] = useState(10);
     const [filterType, setFilterType] = useState("");
     const [filterYear, setFilterYear] = useState("");
+
+    // Sync state with props when data is refreshed from server
+    useEffect(() => {
+        setDocuments(initialDocuments);
+    }, [initialDocuments]);
+
+    // Sync URL with local pagination state
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("page", page.toString());
+        router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    };
 
     const uniqueTypes = Array.from(new Set(documents.map(d => d.type))).sort();
     const uniqueYears = Array.from(new Set(documents.map(d => d.year))).sort((a, b) => b.localeCompare(a));
@@ -70,8 +91,8 @@ export function JdihManagement({ initialDocuments }: JdihManagementProps) {
         if ("error" in result) {
             Swal.fire("Error", result.error, "error");
         } else {
-            // Optimistic update or just reload. Reloading is safer for now as per project pattern.
-            window.location.reload();
+            router.refresh();
+            setIsModalOpen(false);
             Swal.fire({
                 icon: "success",
                 title: "Berhasil",
@@ -101,7 +122,7 @@ export function JdihManagement({ initialDocuments }: JdihManagementProps) {
             if (typeof deleteResult === "object" && "error" in deleteResult) {
                 Swal.fire("Error", deleteResult.error, "error");
             } else {
-                window.location.reload();
+                router.refresh();
             }
         }
     };
@@ -145,7 +166,10 @@ export function JdihManagement({ initialDocuments }: JdihManagementProps) {
                     <div className="flex flex-wrap items-center gap-2">
                         <select
                             value={filterType}
-                            onChange={(e) => setFilterType(e.target.value)}
+                            onChange={(e) => {
+                                setFilterType(e.target.value);
+                                setCurrentPage(1);
+                            }}
                             className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
                         >
                             <option value="">Semua Jenis</option>
@@ -153,7 +177,10 @@ export function JdihManagement({ initialDocuments }: JdihManagementProps) {
                         </select>
                         <select
                             value={filterYear}
-                            onChange={(e) => setFilterYear(e.target.value)}
+                            onChange={(e) => {
+                                setFilterYear(e.target.value);
+                                setCurrentPage(1);
+                            }}
                             className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
                         >
                             <option value="">Semua Tahun</option>
@@ -274,40 +301,13 @@ export function JdihManagement({ initialDocuments }: JdihManagementProps) {
                     </table>
                 </div>
 
-                {/* Pagination */}
-                {totalPages > 1 && (
-                    <div className="px-6 py-4 border-t border-gray-50 flex items-center justify-between">
-                        <p className="text-xs font-bold text-gray-400">
-                            Menampilkan {indexOfFirstItem + 1} - {Math.min(indexOfLastItem, filteredDocuments.length)} dari {filteredDocuments.length} dokumen
-                        </p>
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                disabled={currentPage === 1}
-                                className="p-2 border border-gray-100 rounded-lg hover:bg-gray-50 disabled:opacity-30 transition-all"
-                            >
-                                <ChevronLeft className="w-5 h-5" />
-                            </button>
-                            {[...Array(totalPages)].map((_, i) => (
-                                <button
-                                    key={i}
-                                    onClick={() => setCurrentPage(i + 1)}
-                                    className={`w-10 h-10 rounded-lg font-bold text-sm transition-all ${currentPage === i + 1 ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-50'
-                                        }`}
-                                >
-                                    {i + 1}
-                                </button>
-                            ))}
-                            <button
-                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                disabled={currentPage === totalPages}
-                                className="p-2 border border-gray-100 rounded-lg hover:bg-gray-50 disabled:opacity-30 transition-all"
-                            >
-                                <ChevronRight className="w-5 h-5" />
-                            </button>
-                        </div>
-                    </div>
-                )}
+                <StandardPagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                    totalItems={filteredDocuments.length}
+                    itemsPerPage={itemsPerPage}
+                />
             </div>
 
             <JdihModal

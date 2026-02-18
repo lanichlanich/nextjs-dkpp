@@ -8,6 +8,9 @@ import { NewsModal } from "./NewsModal";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { useEffect } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { StandardPagination } from "./ui/StandardPagination";
 
 interface NewsManagementProps {
     initialNews: NewsItem[];
@@ -18,16 +21,31 @@ type SortField = "title" | "status" | "date";
 type SortDirection = "asc" | "desc";
 
 export function NewsManagement({ initialNews, canManage = true }: NewsManagementProps) {
-    // ... rest of component logic ...
-    // (I will keep the search/filter/sort logic unchanged)
-    // Adjusting the return statement below ...
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const pathname = usePathname();
+
     // State
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState<string>("All");
     const [sortField, setSortField] = useState<SortField>("date");
     const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
-    const [currentPage, setCurrentPage] = useState(1);
+
+    const urlPage = parseInt(searchParams.get("page") || "1");
+    const [currentPage, setCurrentPage] = useState(urlPage);
     const [itemsPerPage] = useState(10);
+
+    // In NewsManagement, we might not need to sync initialNews if it's strictly props-driven, 
+    // but for consistency with other components:
+    // const [news, setNews] = useState(initialNews); // Not currently used, it uses processedNews based on initialNews directly
+
+    // Sync URL with local pagination state
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("page", page.toString());
+        router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    };
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
@@ -299,48 +317,14 @@ export function NewsManagement({ initialNews, canManage = true }: NewsManagement
                     </table>
                 </div>
 
-                {/* Pagination Controls */}
-                {totalPages > 1 && (
-                    <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/30 flex items-center justify-between">
-                        <div className="hidden sm:block">
-                            <p className="text-sm text-gray-700">
-                                Menampilkan <span className="font-semibold">{(currentPage - 1) * itemsPerPage + 1}</span> sampai{" "}
-                                <span className="font-semibold">{Math.min(currentPage * itemsPerPage, processedNews.length)}</span> dari{" "}
-                                <span className="font-semibold">{processedNews.length}</span> berita
-                            </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                                disabled={currentPage === 1}
-                                className="p-2 border border-gray-200 rounded-lg text-gray-600 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                                <ChevronLeft className="w-5 h-5" />
-                            </button>
-
-                            {[...Array(totalPages)].map((_, i) => (
-                                <button
-                                    key={i + 1}
-                                    onClick={() => setCurrentPage(i + 1)}
-                                    className={`w-10 h-10 rounded-lg text-sm font-bold transition-all ${currentPage === i + 1
-                                        ? "bg-green-600 text-white shadow-md shadow-green-200"
-                                        : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
-                                        }`}
-                                >
-                                    {i + 1}
-                                </button>
-                            ))}
-
-                            <button
-                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                                disabled={currentPage === totalPages}
-                                className="p-2 border border-gray-200 rounded-lg text-gray-600 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                                <ChevronRight className="w-5 h-5" />
-                            </button>
-                        </div>
-                    </div>
-                )}
+                <StandardPagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                    totalItems={processedNews.length}
+                    itemsPerPage={itemsPerPage}
+                    color="green"
+                />
             </div>
 
             <NewsModal

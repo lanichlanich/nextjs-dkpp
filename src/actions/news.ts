@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { getSettings } from "@/lib/settings";
+import { uploadToServer } from "@/lib/upload";
 
 async function checkPermission(permission: "canManageNews" | "canManageUsers") {
     const session = await getSession();
@@ -16,14 +17,28 @@ async function checkPermission(permission: "canManageNews" | "canManageUsers") {
 }
 
 export async function createNewsAction(formData: FormData) {
+    if (!(await checkPermission("canManageNews"))) {
+        return { error: "Anda tidak memiliki izin untuk mengelola berita!" };
+    }
+
     const title = formData.get("title") as string;
     const excerpt = formData.get("excerpt") as string;
     const content = formData.get("content") as string;
     const status = formData.get("status") as "Draft" | "Published" | "Archived";
-    const image = formData.get("image") as string;
+    const imageInput = formData.get("image");
 
-    if (!(await checkPermission("canManageNews"))) {
-        return { error: "Anda tidak memiliki izin untuk mengelola berita!" };
+    let imageUrl = "https://images.unsplash.com/photo-1500382017468-9049fed747ef"; // Default
+
+    if (imageInput instanceof File && imageInput.size > 0) {
+        try {
+            const bytes = await imageInput.arrayBuffer();
+            const buffer = Buffer.from(bytes);
+            imageUrl = await uploadToServer(buffer, imageInput.name, imageInput.type);
+        } catch (error: any) {
+            return { error: `Gagal mengunggah gambar: ${error.message}` };
+        }
+    } else if (typeof imageInput === "string" && imageInput.length > 0) {
+        imageUrl = imageInput;
     }
 
     await createNews({
@@ -31,7 +46,7 @@ export async function createNewsAction(formData: FormData) {
         excerpt,
         content,
         status,
-        image: image || "https://images.unsplash.com/photo-1500382017468-9049fed747ef", // Default image
+        image: imageUrl,
         date: new Date().toISOString().split("T")[0],
     });
 
@@ -42,14 +57,28 @@ export async function createNewsAction(formData: FormData) {
 }
 
 export async function updateNewsAction(id: string, formData: FormData) {
+    if (!(await checkPermission("canManageNews"))) {
+        return { error: "Anda tidak memiliki izin untuk mengelola berita!" };
+    }
+
     const title = formData.get("title") as string;
     const excerpt = formData.get("excerpt") as string;
     const content = formData.get("content") as string;
     const status = formData.get("status") as "Draft" | "Published" | "Archived";
-    const image = formData.get("image") as string;
+    const imageInput = formData.get("image");
 
-    if (!(await checkPermission("canManageNews"))) {
-        return { error: "Anda tidak memiliki izin untuk mengelola berita!" };
+    let imageUrl;
+
+    if (imageInput instanceof File && imageInput.size > 0) {
+        try {
+            const bytes = await imageInput.arrayBuffer();
+            const buffer = Buffer.from(bytes);
+            imageUrl = await uploadToServer(buffer, imageInput.name, imageInput.type);
+        } catch (error: any) {
+            return { error: `Gagal mengunggah gambar: ${error.message}` };
+        }
+    } else if (typeof imageInput === "string") {
+        imageUrl = imageInput;
     }
 
     await updateNews(id, {
@@ -57,7 +86,7 @@ export async function updateNewsAction(id: string, formData: FormData) {
         excerpt,
         content,
         status,
-        image,
+        image: imageUrl,
     });
 
     revalidatePath("/admin/news");

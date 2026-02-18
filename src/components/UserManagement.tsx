@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Plus, Search, User as UserIcon, Shield, Trash2, Edit } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Plus, Search, User as UserIcon, Shield, Trash2, Edit, ChevronLeft, ChevronRight } from "lucide-react";
 import { User } from "@/lib/users";
 import { UserModal } from "./UserModal";
 import { saveUserAction, deleteUserAction } from "@/actions/users";
 import Swal from "sweetalert2";
 import { motion } from "framer-motion";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { StandardPagination } from "./ui/StandardPagination";
 
 interface UserManagementProps {
     initialUsers: User[];
@@ -14,11 +16,31 @@ interface UserManagementProps {
 }
 
 export function UserManagement({ initialUsers, canManage = true }: UserManagementProps) {
-    // ...
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const pathname = usePathname();
+
     const [users, setUsers] = useState<User[]>(initialUsers);
     const [searchQuery, setSearchQuery] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
+
+    // Pagination state
+    const urlPage = parseInt(searchParams.get("page") || "1");
+    const [currentPage, setCurrentPage] = useState(urlPage);
+    const itemsPerPage = 10;
+
+    // Sync with server data
+    useEffect(() => {
+        setUsers(initialUsers);
+    }, [initialUsers]);
+
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("page", page.toString());
+        router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    };
 
     const filteredUsers = useMemo(() => {
         return users.filter(user =>
@@ -26,6 +48,13 @@ export function UserManagement({ initialUsers, canManage = true }: UserManagemen
             user.email.toLowerCase().includes(searchQuery.toLowerCase())
         );
     }, [users, searchQuery]);
+
+    const currentItems = useMemo(() => {
+        const start = (currentPage - 1) * itemsPerPage;
+        return filteredUsers.slice(start, start + itemsPerPage);
+    }, [filteredUsers, currentPage]);
+
+    const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
 
     const handleAddUser = () => {
         setEditingUser(null);
@@ -50,32 +79,17 @@ export function UserManagement({ initialUsers, canManage = true }: UserManagemen
             return;
         }
 
-        const savedUser = result as User;
-
-        if (userData.id && users.some(u => u.id === userData.id)) {
-            setUsers(users.map(u => u.id === userData.id ? savedUser : u));
-            Swal.fire({
-                icon: "success",
-                title: "Berhasil",
-                text: "Data pengguna diperbarui",
-                toast: true,
-                position: "top-end",
-                showConfirmButton: false,
-                timer: 3000
-            });
-        } else {
-            setUsers([...users, savedUser]);
-            Swal.fire({
-                icon: "success",
-                title: "Berhasil",
-                text: "Pengguna baru ditambahkan",
-                toast: true,
-                position: "top-end",
-                showConfirmButton: false,
-                timer: 3000
-            });
-        }
+        router.refresh();
         setIsModalOpen(false);
+        Swal.fire({
+            icon: "success",
+            title: "Berhasil",
+            text: editingUser ? "Data pengguna diperbarui" : "Pengguna baru ditambahkan",
+            toast: true,
+            position: "top-end",
+            showConfirmButton: false,
+            timer: 3000
+        });
     };
 
     const handleDeleteUser = async (id: string, name: string) => {
@@ -104,7 +118,7 @@ export function UserManagement({ initialUsers, canManage = true }: UserManagemen
             }
 
             if (result === true) {
-                setUsers(users.filter(u => u.id !== id));
+                router.refresh();
                 Swal.fire("Terhapus!", "Akun pengguna telah dihapus.", "success");
             } else {
                 Swal.fire("Gagal", "Tidak dapat menghapus pengguna.", "error");
@@ -148,8 +162,8 @@ export function UserManagement({ initialUsers, canManage = true }: UserManagemen
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 text-gray-900">
-                            {filteredUsers.length > 0 ? (
-                                filteredUsers.map((user, index) => (
+                            {currentItems.length > 0 ? (
+                                currentItems.map((user, index) => (
                                     <motion.tr
                                         key={user.id}
                                         initial={{ opacity: 0, y: 10 }}
@@ -216,6 +230,16 @@ export function UserManagement({ initialUsers, canManage = true }: UserManagemen
                         </tbody>
                     </table>
                 </div>
+
+                {/* Pagination Controls */}
+                <StandardPagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                    totalItems={filteredUsers.length}
+                    itemsPerPage={itemsPerPage}
+                    color="green"
+                />
             </div>
 
             <UserModal

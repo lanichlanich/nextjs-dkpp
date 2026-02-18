@@ -25,6 +25,8 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import Swal from "sweetalert2";
 import { saveDocumentAction, deleteDocumentAction } from "@/actions/history";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useEffect } from "react";
 
 interface HistoryManagementProps {
     employees: EmployeeDisplay[];
@@ -33,8 +35,13 @@ interface HistoryManagementProps {
 }
 
 export function HistoryManagement({ employees, initialDocuments, positions }: HistoryManagementProps) {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const pathname = usePathname();
+
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
+    const urlEmpId = searchParams.get("empId");
+    const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(urlEmpId);
     const [showUploadModal, setShowUploadModal] = useState(false);
     const [editingDocument, setEditingDocument] = useState<EmployeeDocument | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -48,6 +55,14 @@ export function HistoryManagement({ employees, initialDocuments, positions }: Hi
         positionId: ''
     });
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+    // Sync selection with URL
+    const handleSelectEmployee = (id: string) => {
+        setSelectedEmployeeId(id);
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("empId", id);
+        router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    };
 
 
     const selectedEmployee = useMemo(() =>
@@ -152,7 +167,7 @@ export function HistoryManagement({ employees, initialDocuments, positions }: Hi
                 setShowUploadModal(false);
                 setDocumentType(null);
                 setEditingDocument(null);
-                window.location.reload();
+                router.refresh();
             }
         } catch (error) {
             Swal.fire('Error', 'Gagal menyimpan dokumen', 'error');
@@ -194,7 +209,7 @@ export function HistoryManagement({ employees, initialDocuments, positions }: Hi
             if ('error' in deleteResult) {
                 Swal.fire('Error', deleteResult.error, 'error');
             } else {
-                window.location.reload();
+                router.refresh();
             }
         }
     };
@@ -230,7 +245,7 @@ export function HistoryManagement({ employees, initialDocuments, positions }: Hi
                     {filteredEmployees.map(emp => (
                         <button
                             key={emp.id}
-                            onClick={() => setSelectedEmployeeId(emp.id)}
+                            onClick={() => handleSelectEmployee(emp.id)}
                             className={`w-full text-left p-4 rounded-2xl transition-all duration-200 group relative ${selectedEmployeeId === emp.id
                                 ? 'bg-green-600 text-white shadow-lg shadow-green-200'
                                 : 'hover:bg-gray-50 text-gray-700'
