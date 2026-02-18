@@ -81,7 +81,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
                                 </div>
 
                                 {/* Article Content */}
-                                <div className="prose prose-xl prose-green max-w-none prose-img:rounded-3xl prose-headings:text-gray-950 prose-headings:font-black prose-p:text-gray-900 prose-p:leading-loose prose-li:text-gray-900 prose-li:leading-loose">
+                                <div className="prose prose-xl prose-green max-w-none prose-img:rounded-3xl prose-headings:text-gray-950 prose-headings:font-black prose-p:text-gray-900 prose-p:leading-loose prose-li:text-gray-900 prose-li:leading-loose break-words overflow-hidden text-justify">
                                     <div dangerouslySetInnerHTML={{ __html: newsItem.content }} />
                                 </div>
 

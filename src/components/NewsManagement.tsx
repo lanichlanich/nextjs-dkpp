@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Plus, Search, Edit, ChevronLeft, ChevronRight, Download, FileSpreadsheet, FileText, ArrowUpDown, Filter } from "lucide-react";
+import { Plus, Search, Edit, ChevronLeft, ChevronRight, Download, FileSpreadsheet, FileText, ArrowUpDown, Filter, Loader2 } from "lucide-react";
 import { NewsItem } from "@/lib/news";
 import { DeleteNewsButton } from "./DeleteNewsButton";
 import { NewsModal } from "./NewsModal";
@@ -11,6 +11,8 @@ import autoTable from "jspdf-autotable";
 import { useEffect } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { StandardPagination } from "./ui/StandardPagination";
+import { updateNewsStatusAction } from "@/actions/news";
+import Swal from "sweetalert2";
 
 interface NewsManagementProps {
     initialNews: NewsItem[];
@@ -49,6 +51,31 @@ export function NewsManagement({ initialNews, canManage = true }: NewsManagement
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
+    const [editingStatusId, setEditingStatusId] = useState<string | null>(null);
+    const [isStatusSaving, setIsStatusSaving] = useState<string | null>(null);
+
+    const handleStatusChange = async (id: string, status: string) => {
+        setIsStatusSaving(id);
+
+        const result = await updateNewsStatusAction(id, status);
+
+        if ("error" in result) {
+            Swal.fire("Error", result.error, "error");
+        } else {
+            router.refresh();
+            setEditingStatusId(null);
+            Swal.fire({
+                icon: "success",
+                title: "Updated",
+                text: "Status berita berhasil diperbarui",
+                toast: true,
+                position: "top-end",
+                showConfirmButton: false,
+                timer: 2000
+            });
+        }
+        setIsStatusSaving(null);
+    };
 
     // Data Pipeline: Filter -> Sort -> Paginate
     const processedNews = useMemo(() => {
@@ -278,12 +305,32 @@ export function NewsManagement({ initialNews, canManage = true }: NewsManagement
                                         <div className="text-xs text-gray-500 line-clamp-1 mt-0.5">{item.excerpt}</div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full 
-                      ${item.status === 'Published' ? 'bg-green-100 text-green-700' :
-                                                item.status === 'Draft' ? 'bg-yellow-100 text-yellow-700' :
-                                                    'bg-gray-100 text-gray-600'}`}>
-                                            {item.status}
-                                        </span>
+                                        {isStatusSaving === item.id ? (
+                                            <div className="flex justify-center">
+                                                <Loader2 className="w-4 h-4 animate-spin text-green-600" />
+                                            </div>
+                                        ) : editingStatusId === item.id ? (
+                                            <select
+                                                autoFocus
+                                                value={item.status}
+                                                onChange={(e) => handleStatusChange(item.id, e.target.value)}
+                                                onBlur={() => setEditingStatusId(null)}
+                                                className="text-xs font-bold text-gray-900 bg-gray-50 border border-green-200 rounded-lg px-2 py-1 outline-none focus:ring-2 focus:ring-green-500"
+                                            >
+                                                <option value="Published">Published</option>
+                                                <option value="Draft">Draft</option>
+                                                <option value="Archived">Archived</option>
+                                            </select>
+                                        ) : (
+                                            <span
+                                                onClick={() => setEditingStatusId(item.id)}
+                                                className={`px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full cursor-pointer hover:ring-2 hover:ring-offset-1 transition-all
+                                                ${item.status === 'Published' ? 'bg-green-100 text-green-700 hover:ring-green-300' :
+                                                        item.status === 'Draft' ? 'bg-yellow-100 text-yellow-700 hover:ring-yellow-300' :
+                                                            'bg-gray-100 text-gray-600 hover:ring-gray-300'}`}>
+                                                {item.status}
+                                            </span>
+                                        )}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-medium">
                                         {item.date}

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { X, Save, FileText, Hash, Calendar, FileType, Info, Link as LinkIcon } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { X, Save, FileText, Hash, Calendar, FileType, Info, Link as LinkIcon, Upload, FileUp } from "lucide-react";
 import { JdihDocument } from "@/lib/jdih";
 import { motion, AnimatePresence } from "framer-motion";
 import Swal from "sweetalert2";
@@ -9,7 +9,7 @@ import Swal from "sweetalert2";
 interface JdihModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (data: Partial<JdihDocument>) => Promise<void>;
+    onSave: (data: FormData) => Promise<void>;
     document?: JdihDocument | null;
 }
 
@@ -31,6 +31,8 @@ export function JdihModal({ isOpen, onClose, onSave, document }: JdihModalProps)
         description: "",
         filePath: "",
     });
+    const [pdfFile, setPdfFile] = useState<File | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
@@ -55,7 +57,19 @@ export function JdihModal({ isOpen, onClose, onSave, document }: JdihModalProps)
                 filePath: "",
             });
         }
+        setPdfFile(null);
     }, [document, isOpen]);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (file.type !== 'application/pdf') {
+                Swal.fire("Gagal", "File harus berformat PDF", "error");
+                return;
+            }
+            setPdfFile(file);
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -65,12 +79,26 @@ export function JdihModal({ isOpen, onClose, onSave, document }: JdihModalProps)
             return;
         }
 
+        const data = new FormData();
+        if (formData.id) data.append('id', formData.id);
+        data.append('title', formData.title || '');
+        data.append('type', formData.type || '');
+        data.append('number', formData.number || '');
+        data.append('year', formData.year || '');
+        data.append('description', formData.description || '');
+
+        if (pdfFile) {
+            data.append('file', pdfFile);
+        } else if (formData.filePath) {
+            data.append('filePath', formData.filePath);
+        }
+
         setIsSubmitting(true);
         try {
-            await onSave(formData);
+            await onSave(data);
             onClose();
         } catch (error) {
-            Swal.fire("Error", "Gagal menyimpan data JDIH", "error");
+            console.error("Save error:", error);
         } finally {
             setIsSubmitting(false);
         }
@@ -160,16 +188,25 @@ export function JdihModal({ isOpen, onClose, onSave, document }: JdihModalProps)
                                 </div>
                                 <div>
                                     <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-                                        <LinkIcon className="w-3.5 h-3.5 text-blue-600" />
-                                        Link File (URL/Path)
+                                        <FileUp className="w-3.5 h-3.5 text-blue-600" />
+                                        Upload PDF
                                     </label>
-                                    <input
-                                        type="text"
-                                        value={formData.filePath || ""}
-                                        onChange={(e) => setFormData({ ...formData, filePath: e.target.value })}
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-gray-900 font-medium shadow-sm"
-                                        placeholder="https://..."
-                                    />
+                                    <div
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus-within:ring-2 focus-within:ring-blue-500 outline-none transition-all cursor-pointer hover:bg-white overflow-hidden shadow-sm flex items-center gap-2"
+                                    >
+                                        <Upload className={`w-4 h-4 ${pdfFile ? "text-blue-600" : "text-gray-400"}`} />
+                                        <span className={`text-sm truncate flex-1 font-bold ${pdfFile ? "text-blue-700" : (formData.filePath ? "text-green-600" : "text-gray-500")}`}>
+                                            {pdfFile ? pdfFile.name : (formData.filePath ? "✅ PDF Terupload" : "Pilih file PDF...")}
+                                        </span>
+                                        <input
+                                            ref={fileInputRef}
+                                            type="file"
+                                            accept="application/pdf"
+                                            onChange={handleFileChange}
+                                            className="hidden"
+                                        />
+                                    </div>
                                 </div>
                             </div>
 

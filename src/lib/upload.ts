@@ -1,3 +1,11 @@
+export function sanitizeFilename(text: string): string {
+    return text
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '-') // Replace non-alphanumeric with hyphens
+        .replace(/-+/g, '-')      // Replace multiple hyphens with single hyphen
+        .replace(/^-+|-+$/g, '');  // Trim hyphens from start and end
+}
+
 export async function uploadToServer(file: Buffer, fileName: string, mimeType: string) {
     const endpoint = process.env.UPLOAD_ENDPOINT;
     if (!endpoint) {

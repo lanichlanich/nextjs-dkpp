@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { getSettings } from "@/lib/settings";
-import { uploadToServer } from "@/lib/upload";
+import { uploadToServer, sanitizeFilename } from "@/lib/upload";
 
 async function checkPermission(permission: "canManageNews" | "canManageUsers") {
     const session = await getSession();
@@ -31,9 +31,14 @@ export async function createNewsAction(formData: FormData) {
 
     if (imageInput instanceof File && imageInput.size > 0) {
         try {
+            // Rename file to match title
+            const sanitizedTitle = sanitizeFilename(title);
+            const extension = imageInput.name.split('.').pop() || 'jpg';
+            const newFileName = `${sanitizedTitle}.${extension}`;
+
             const bytes = await imageInput.arrayBuffer();
             const buffer = Buffer.from(bytes);
-            imageUrl = await uploadToServer(buffer, imageInput.name, imageInput.type);
+            imageUrl = await uploadToServer(buffer, newFileName, imageInput.type);
         } catch (error: any) {
             return { error: `Gagal mengunggah gambar: ${error.message}` };
         }
@@ -71,9 +76,14 @@ export async function updateNewsAction(id: string, formData: FormData) {
 
     if (imageInput instanceof File && imageInput.size > 0) {
         try {
+            // Rename file to match title
+            const sanitizedTitle = sanitizeFilename(title);
+            const extension = imageInput.name.split('.').pop() || 'jpg';
+            const newFileName = `${sanitizedTitle}.${extension}`;
+
             const bytes = await imageInput.arrayBuffer();
             const buffer = Buffer.from(bytes);
-            imageUrl = await uploadToServer(buffer, imageInput.name, imageInput.type);
+            imageUrl = await uploadToServer(buffer, newFileName, imageInput.type);
         } catch (error: any) {
             return { error: `Gagal mengunggah gambar: ${error.message}` };
         }
@@ -93,6 +103,21 @@ export async function updateNewsAction(id: string, formData: FormData) {
     revalidatePath("/");
 
     return { success: true, message: "Berita berhasil diperbarui!" };
+}
+
+export async function updateNewsStatusAction(id: string, status: string) {
+    if (!(await checkPermission("canManageNews"))) {
+        return { error: "Anda tidak memiliki izin untuk mengelola berita!" };
+    }
+
+    try {
+        await updateNews(id, { status });
+        revalidatePath("/admin/news");
+        revalidatePath("/");
+        return { success: true };
+    } catch (error: any) {
+        return { error: error.message || "Gagal memperbarui status berita" };
+    }
 }
 
 export async function deleteNewsAction(id: string) {

@@ -18,11 +18,12 @@ import {
     Cake,
     Clock,
     ShieldCheck,
-    Hash
+    Hash,
+    Loader2
 } from "lucide-react";
 import { Employee, EmployeeDisplay } from "@/lib/employees";
 import { Position } from "@/lib/positions";
-import { saveEmployeeAction, deleteEmployeeAction, importEmployeesAction } from "@/actions/employees";
+import { saveEmployeeAction, deleteEmployeeAction, importEmployeesAction, bulkUpdateEmployeesAction } from "@/actions/employees";
 import { EmployeeModal } from "./EmployeeModal";
 import Swal from "sweetalert2";
 import { motion, AnimatePresence } from "framer-motion";
@@ -44,6 +45,15 @@ export function EmployeeManagement({ initialEmployees, positions }: EmployeeMana
     const pathname = usePathname();
 
     const [employees, setEmployees] = useState<EmployeeDisplay[]>(initialEmployees);
+    const [editingKeaktifanId, setEditingKeaktifanId] = useState<string | null>(null);
+    const [isKeaktifanSaving, setIsKeaktifanSaving] = useState<string | null>(null);
+    const [editingGenderId, setEditingGenderId] = useState<string | null>(null);
+    const [isGenderSaving, setIsGenderSaving] = useState<string | null>(null);
+    const [editingPositionId, setEditingPositionId] = useState<string | null>(null);
+    const [isPositionSaving, setIsPositionSaving] = useState<string | null>(null);
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const [isBulkUpdating, setIsBulkUpdating] = useState(false);
+    const [activeBulkField, setActiveBulkField] = useState<string>("");
     const [searchTerm, setSearchTerm] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingEmployee, setEditingEmployee] = useState<EmployeeDisplay | null>(null);
@@ -116,6 +126,121 @@ export function EmployeeManagement({ initialEmployees, positions }: EmployeeMana
     const handleEdit = (employee: EmployeeDisplay) => {
         setEditingEmployee(employee);
         setIsModalOpen(true);
+    };
+
+    const handleKeaktifanChange = async (id: string, keaktifan: string) => {
+        setIsKeaktifanSaving(id);
+        const result = await saveEmployeeAction({ id, keaktifan });
+
+        if ("error" in result) {
+            Swal.fire("Error", result.error, "error");
+        } else {
+            router.refresh();
+            setEditingKeaktifanId(null);
+            Swal.fire({
+                icon: "success",
+                title: "Updated",
+                text: "Keaktifan berhasil diperbarui",
+                toast: true,
+                position: "top-end",
+                showConfirmButton: false,
+                timer: 2000
+            });
+        }
+        setIsKeaktifanSaving(null);
+    };
+
+    const handleGenderChange = async (id: string, gender: string) => {
+        setIsGenderSaving(id);
+        const result = await saveEmployeeAction({ id, gender });
+
+        if ("error" in result) {
+            Swal.fire("Error", result.error, "error");
+        } else {
+            router.refresh();
+            setEditingGenderId(null);
+            Swal.fire({
+                icon: "success",
+                title: "Updated",
+                text: "Jenis Kelamin berhasil diperbarui",
+                toast: true,
+                position: "top-end",
+                showConfirmButton: false,
+                timer: 2000
+            });
+        }
+        setIsGenderSaving(null);
+    };
+
+    const handlePositionChange = async (id: string, positionId: string) => {
+        setIsPositionSaving(id);
+        const result = await saveEmployeeAction({ id, positionId });
+
+        if ("error" in result) {
+            Swal.fire("Error", result.error, "error");
+        } else {
+            router.refresh();
+            setEditingPositionId(null);
+            Swal.fire({
+                icon: "success",
+                title: "Updated",
+                text: "Jabatan berhasil diperbarui",
+                toast: true,
+                position: "top-end",
+                showConfirmButton: false,
+                timer: 2000
+            });
+        }
+        setIsPositionSaving(null);
+    };
+
+    const toggleSelect = (id: string) => {
+        setSelectedIds(prev =>
+            prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+        );
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedIds.length === currentItems.length) {
+            setSelectedIds([]);
+        } else {
+            setSelectedIds(currentItems.map(emp => emp.id));
+        }
+    };
+
+    const handleBulkUpdate = async (data: Partial<Employee>, label: string) => {
+        if (selectedIds.length === 0) return;
+
+        const result = await Swal.fire({
+            title: 'Konfirmasi Perubahan Massal',
+            text: `Apakah Anda yakin ingin mengubah ${label} untuk ${selectedIds.length} pegawai yang dipilih?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#16a34a',
+            cancelButtonColor: '#dc2626',
+            confirmButtonText: 'Ya, Ubah Massal',
+            cancelButtonText: 'Batal'
+        });
+
+        if (result.isConfirmed) {
+            setIsBulkUpdating(true);
+            const updateResult = await bulkUpdateEmployeesAction(selectedIds, data);
+
+            if ("error" in updateResult) {
+                Swal.fire("Error", updateResult.error, "error");
+            } else {
+                router.refresh();
+                setSelectedIds([]);
+                setActiveBulkField("");
+                Swal.fire({
+                    icon: "success",
+                    title: "Berhasil",
+                    text: `${selectedIds.length} pegawai berhasil diperbarui ${label.toLowerCase()}nya`,
+                    timer: 2000
+                });
+            }
+            setIsBulkUpdating(false);
+        }
     };
 
     const handleSave = async (data: Partial<Employee>) => {
@@ -700,6 +825,14 @@ export function EmployeeManagement({ initialEmployees, positions }: EmployeeMana
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-gray-50/50 border-b border-gray-100">
+                                <th className="px-6 py-4 w-10">
+                                    <input
+                                        type="checkbox"
+                                        className="rounded border-gray-300 text-green-600 focus:ring-green-500 w-4 h-4 cursor-pointer"
+                                        checked={currentItems.length > 0 && selectedIds.length === currentItems.length}
+                                        onChange={toggleSelectAll}
+                                    />
+                                </th>
                                 <th
                                     className="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-widest cursor-pointer hover:bg-gray-100/50 transition-colors"
                                     onClick={() => toggleSort("name")}
@@ -727,17 +860,29 @@ export function EmployeeManagement({ initialEmployees, positions }: EmployeeMana
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: idx * 0.05 }}
                                         key={emp.id}
-                                        className="hover:bg-gray-50/50 transition-colors group"
+                                        className={`transition-colors group ${selectedIds.includes(emp.id) ? 'bg-green-50/50' : 'hover:bg-gray-50/50'}`}
                                     >
                                         <td className="px-6 py-5">
+                                            <input
+                                                type="checkbox"
+                                                className="rounded border-gray-300 text-green-600 focus:ring-green-500 w-4 h-4 cursor-pointer"
+                                                checked={selectedIds.includes(emp.id)}
+                                                onChange={() => toggleSelect(emp.id)}
+                                                onClick={(e) => e.stopPropagation()}
+                                            />
+                                        </td>
+                                        <td className="px-6 py-5" onClick={() => toggleSelect(emp.id)}>
                                             <div className="flex items-center gap-4">
                                                 <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-green-600 font-bold">
                                                     {emp.name.charAt(0)}
                                                 </div>
-                                                <div>
-                                                    <div className="font-bold text-gray-900 group-hover:text-green-600 transition-colors">{emp.name}</div>
+                                                <div
+                                                    className="cursor-pointer group/name"
+                                                    onClick={() => handleEdit(emp)}
+                                                >
+                                                    <div className="font-bold text-gray-900 group-hover:text-green-600 group-hover/name:underline transition-colors">{emp.name}</div>
                                                     <div
-                                                        className="text-xs font-mono text-gray-400 mt-0.5 cursor-pointer hover:text-green-500 flex items-center gap-1"
+                                                        className="text-xs font-mono text-gray-400 mt-0.5 hover:text-green-500 flex items-center gap-1"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             toggleSort("nip");
@@ -778,29 +923,91 @@ export function EmployeeManagement({ initialEmployees, positions }: EmployeeMana
                                             </div>
                                         </td>
                                         <td className="px-6 py-5 text-center">
-                                            <span className={`inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${emp.gender === "Laki-laki"
-                                                ? "bg-blue-50 text-blue-600"
-                                                : "bg-pink-50 text-pink-600"
-                                                }`}>
-                                                {emp.gender}
-                                            </span>
+                                            {isGenderSaving === emp.id ? (
+                                                <div className="flex justify-center">
+                                                    <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                                                </div>
+                                            ) : editingGenderId === emp.id ? (
+                                                <select
+                                                    autoFocus
+                                                    value={emp.gender}
+                                                    onChange={(e) => handleGenderChange(emp.id, e.target.value)}
+                                                    onBlur={() => setEditingGenderId(null)}
+                                                    className="text-[10px] font-bold text-gray-900 bg-gray-50 border border-blue-200 rounded-lg px-2 py-1 outline-none focus:ring-2 focus:ring-blue-500"
+                                                >
+                                                    <option value="Laki-laki">Laki-laki</option>
+                                                    <option value="Perempuan">Perempuan</option>
+                                                </select>
+                                            ) : (
+                                                <span
+                                                    onClick={() => setEditingGenderId(emp.id)}
+                                                    className={`inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider cursor-pointer hover:ring-2 hover:ring-offset-1 transition-all ${emp.gender === "Laki-laki"
+                                                        ? "bg-blue-50 text-blue-600 hover:ring-blue-200"
+                                                        : "bg-pink-50 text-pink-600 hover:ring-pink-200"
+                                                        }`}>
+                                                    {emp.gender}
+                                                </span>
+                                            )}
                                         </td>
                                         <td className="px-6 py-5 text-center">
-                                            <span className={`inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${emp.keaktifan === "Aktif"
-                                                ? "bg-green-50 text-green-600"
-                                                : emp.keaktifan === "Pensiun"
-                                                    ? "bg-gray-100 text-gray-600"
-                                                    : "bg-orange-50 text-orange-600"
-                                                }`}>
-                                                {emp.keaktifan}
-                                            </span>
+                                            {isKeaktifanSaving === emp.id ? (
+                                                <div className="flex justify-center">
+                                                    <Loader2 className="w-4 h-4 animate-spin text-green-600" />
+                                                </div>
+                                            ) : editingKeaktifanId === emp.id ? (
+                                                <select
+                                                    autoFocus
+                                                    value={emp.keaktifan}
+                                                    onChange={(e) => handleKeaktifanChange(emp.id, e.target.value)}
+                                                    onBlur={() => setEditingKeaktifanId(null)}
+                                                    className="text-[10px] font-bold text-gray-900 bg-gray-50 border border-green-200 rounded-lg px-2 py-1 outline-none focus:ring-2 focus:ring-green-500"
+                                                >
+                                                    <option value="Aktif">Aktif</option>
+                                                    <option value="Pensiun">Pensiun</option>
+                                                    <option value="Mutasi">Mutasi</option>
+                                                </select>
+                                            ) : (
+                                                <span
+                                                    onClick={() => setEditingKeaktifanId(emp.id)}
+                                                    className={`inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider cursor-pointer hover:ring-2 hover:ring-offset-1 transition-all ${emp.keaktifan === "Aktif"
+                                                        ? "bg-green-50 text-green-600 hover:ring-green-200"
+                                                        : emp.keaktifan === "Pensiun"
+                                                            ? "bg-gray-100 text-gray-600 hover:ring-gray-200"
+                                                            : "bg-orange-50 text-orange-600 hover:ring-orange-200"
+                                                        }`}>
+                                                    {emp.keaktifan}
+                                                </span>
+                                            )}
                                         </td>
                                         <td className="px-6 py-5">
                                             <div className="flex flex-col">
-                                                <span className="text-sm font-bold text-gray-900 line-clamp-2">
-                                                    {emp.position?.namaJabatan || '-'}
-                                                </span>
-                                                {emp.position && (
+                                                {isPositionSaving === emp.id ? (
+                                                    <div className="flex items-center gap-2">
+                                                        <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                                                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Menyimpan...</span>
+                                                    </div>
+                                                ) : editingPositionId === emp.id ? (
+                                                    <select
+                                                        autoFocus
+                                                        value={emp.positionId || ""}
+                                                        onChange={(e) => handlePositionChange(emp.id, e.target.value)}
+                                                        onBlur={() => setEditingPositionId(null)}
+                                                        className="w-full text-xs font-bold text-gray-900 bg-gray-50 border border-blue-200 rounded-lg px-2 py-1 outline-none focus:ring-2 focus:ring-blue-500 max-w-[200px]"
+                                                    >
+                                                        <option value="">- Pilih Jabatan -</option>
+                                                        {positions.map(p => (
+                                                            <option key={p.id} value={p.id}>{p.namaJabatan}</option>
+                                                        ))}
+                                                    </select>
+                                                ) : (
+                                                    <span
+                                                        onClick={() => setEditingPositionId(emp.id)}
+                                                        className="text-sm font-bold text-gray-900 line-clamp-2 cursor-pointer hover:text-blue-600 hover:underline transition-colors"
+                                                    >
+                                                        {emp.position?.namaJabatan || '-'}
+                                                    </span>
+                                                )}
+                                                {emp.position && !editingPositionId && (
                                                     <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full w-fit mt-1">
                                                         {emp.position.jenisJabatan}
                                                     </span>
@@ -829,7 +1036,7 @@ export function EmployeeManagement({ initialEmployees, positions }: EmployeeMana
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={4} className="px-6 py-12 text-center text-gray-400 italic">
+                                    <td colSpan={8} className="px-6 py-12 text-center text-gray-400 italic">
                                         Tidak ada data pegawai ditemukan.
                                     </td>
                                 </tr>
@@ -856,7 +1063,146 @@ export function EmployeeManagement({ initialEmployees, positions }: EmployeeMana
                 employee={editingEmployee}
                 positions={positions}
             />
-        </div >
+
+            {/* Bulk Action Bar */}
+            <AnimatePresence>
+                {selectedIds.length > 0 && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 100 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 100 }}
+                        className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white px-6 py-4 rounded-2xl shadow-2xl border border-gray-800 flex items-center gap-6 min-w-[600px]"
+                    >
+                        <div className="flex items-center gap-3 pr-6 border-r border-gray-700">
+                            <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white font-bold text-sm">
+                                {selectedIds.length}
+                            </div>
+                            <span className="text-sm font-bold truncate max-w-[150px]">Pegawai</span>
+                        </div>
+
+                        <div className="flex-1 flex items-center gap-4">
+                            <select
+                                value={activeBulkField}
+                                onChange={(e) => setActiveBulkField(e.target.value)}
+                                className="bg-gray-800 border border-gray-700 text-white text-xs font-bold rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-500"
+                            >
+                                <option value="">- Pilih Aksi Massal -</option>
+                                <option value="positionId">Ubah Jabatan</option>
+                                <option value="status">Ubah Status</option>
+                                <option value="keaktifan">Ubah Keaktifan</option>
+                                <option value="gender">Ubah Jenis Kelamin</option>
+                                <option value="golongan">Ubah Golongan</option>
+                            </select>
+
+                            {activeBulkField === "positionId" && (
+                                <select
+                                    className="bg-gray-800 border border-gray-700 text-white text-xs font-bold rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-500 min-w-[150px]"
+                                    onChange={(e) => {
+                                        if (e.target.value) {
+                                            handleBulkUpdate({ positionId: e.target.value }, "Jabatan");
+                                            setActiveBulkField("");
+                                        }
+                                    }}
+                                >
+                                    <option value="">- Pilih Jabatan -</option>
+                                    {positions.map(p => (
+                                        <option key={p.id} value={p.id}>{p.namaJabatan}</option>
+                                    ))}
+                                </select>
+                            )}
+
+                            {activeBulkField === "status" && (
+                                <select
+                                    className="bg-gray-800 border border-gray-700 text-white text-xs font-bold rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-500"
+                                    onChange={(e) => {
+                                        if (e.target.value) {
+                                            handleBulkUpdate({ status: e.target.value }, "Status");
+                                            setActiveBulkField("");
+                                        }
+                                    }}
+                                >
+                                    <option value="">- Pilih Status -</option>
+                                    <option value="PNS">PNS</option>
+                                    <option value="CPNS">CPNS</option>
+                                    <option value="PPPK">PPPK</option>
+                                    <option value="PPPK Paruh Waktu">PPPK Paruh Waktu</option>
+                                    <option value="Outsourcing">Outsourcing</option>
+                                </select>
+                            )}
+
+                            {activeBulkField === "keaktifan" && (
+                                <select
+                                    className="bg-gray-800 border border-gray-700 text-white text-xs font-bold rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-500"
+                                    onChange={(e) => {
+                                        if (e.target.value) {
+                                            handleBulkUpdate({ keaktifan: e.target.value }, "Keaktifan");
+                                            setActiveBulkField("");
+                                        }
+                                    }}
+                                >
+                                    <option value="">- Pilih Keaktifan -</option>
+                                    <option value="Aktif">Aktif</option>
+                                    <option value="Pensiun">Pensiun</option>
+                                    <option value="Mutasi">Mutasi</option>
+                                </select>
+                            )}
+
+                            {activeBulkField === "gender" && (
+                                <select
+                                    className="bg-gray-800 border border-gray-700 text-white text-xs font-bold rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-500"
+                                    onChange={(e) => {
+                                        if (e.target.value) {
+                                            handleBulkUpdate({ gender: e.target.value }, "Jenis Kelamin");
+                                            setActiveBulkField("");
+                                        }
+                                    }}
+                                >
+                                    <option value="">- Pilih Jenis Kelamin -</option>
+                                    <option value="Laki-laki">Laki-laki</option>
+                                    <option value="Perempuan">Perempuan</option>
+                                </select>
+                            )}
+
+                            {activeBulkField === "golongan" && (
+                                <select
+                                    className="bg-gray-800 border border-gray-700 text-white text-xs font-bold rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-500"
+                                    onChange={(e) => {
+                                        if (e.target.value) {
+                                            handleBulkUpdate({ golongan: e.target.value }, "Golongan");
+                                            setActiveBulkField("");
+                                        }
+                                    }}
+                                >
+                                    <option value="">- Pilih Golongan -</option>
+                                    <optgroup label="PNS / CPNS">
+                                        {["I/a", "I/b", "I/c", "I/d", "II/a", "II/b", "II/c", "II/d", "III/a", "III/b", "III/c", "III/d", "IV/a", "IV/b", "IV/c", "IV/d", "IV/e"].map(g => (
+                                            <option key={g} value={g}>{g}</option>
+                                        ))}
+                                    </optgroup>
+                                    <optgroup label="PPPK">
+                                        {["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI"].map(g => (
+                                            <option key={g} value={g}>{g}</option>
+                                        ))}
+                                    </optgroup>
+                                    <option value="-">-</option>
+                                </select>
+                            )}
+                        </div>
+
+                        <button
+                            onClick={() => {
+                                setSelectedIds([]);
+                                setActiveBulkField("");
+                            }}
+                            className="text-xs font-black uppercase tracking-widest text-gray-400 hover:text-white transition-colors"
+                            disabled={isBulkUpdating}
+                        >
+                            Batal
+                        </button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
     );
 }
 

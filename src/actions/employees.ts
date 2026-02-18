@@ -58,3 +58,18 @@ export async function importEmployeesAction(data: (Partial<Employee> & { namaJab
         return { error: error.message || "Gagal mengimpor data pegawai" };
     }
 }
+
+export async function bulkUpdateEmployeesAction(ids: string[], data: Partial<Employee>) {
+    try {
+        await prisma.$transaction(
+            ids.map(id => (prisma as any).employee.update({
+                where: { id },
+                data
+            }))
+        );
+        revalidatePath("/admin/employees");
+        return { success: true };
+    } catch (error: any) {
+        return { error: error.message || "Gagal memperbarui data pegawai secara massal" };
+    }
+}

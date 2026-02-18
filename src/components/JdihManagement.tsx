@@ -85,7 +85,7 @@ export function JdihManagement({ initialDocuments }: JdihManagementProps) {
         setIsModalOpen(true);
     };
 
-    const handleSave = async (data: Partial<JdihDocument>) => {
+    const handleSave = async (data: FormData) => {
         const result = await saveJdihAction(data);
 
         if ("error" in result) {
