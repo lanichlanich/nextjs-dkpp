@@ -120,6 +120,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             show: true
         },
         {
+            name: "SK KGB",
+            href: "/admin/kgb",
+            icon: FileText,
+            show: true
+        },
+        {
             name: "Pengaturan",
             href: "/admin/settings",
             icon: Settings,
