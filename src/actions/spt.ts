@@ -15,16 +15,18 @@ export async function submitSpt(formData: FormData) {
             return { success: false, error: "Semua form wajib diisi" };
         }
 
-        if (file.type !== "application/pdf") {
-            return { success: false, error: "File harus berupa PDF" };
+        const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+        if (!allowedTypes.includes(file.type)) {
+            return { success: false, error: "File harus berupa Gambar (JPG, PNG, atau WebP)" };
         }
 
         if (file.size > 5 * 1024 * 1024) { // 5MB limit
             return { success: false, error: "Ukuran file maksimal 5MB" };
         }
 
+        const extension = file.type === "image/jpeg" ? "jpg" : file.type.split("/")[1];
         const sanitizedName = sanitizeFilename(name);
-        const fileName = `${sanitizedName}_${nip}_${year}.pdf`;
+        const fileName = `${sanitizedName}_${nip}_${year}.${extension}`;
 
         // Convert File to Buffer for upload
         const buffer = Buffer.from(await file.arrayBuffer());

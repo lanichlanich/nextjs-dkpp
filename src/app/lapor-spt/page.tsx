@@ -218,13 +218,13 @@ export default function LaporSptPage() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Bukti Lapor SPT (PDF)</label>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Bukti Lapor SPT (Gambar/Foto)</label>
                                     <div className="relative">
                                         <input
                                             type="file"
                                             id="file"
                                             name="file"
-                                            accept="application/pdf"
+                                            accept="image/*"
                                             required
                                             className="hidden"
                                             onChange={(e) => setFileName(e.target.files?.[0]?.name || "")}
@@ -237,9 +237,9 @@ export default function LaporSptPage() {
                                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
                                                 <UploadCloud className={`w-8 h-8 mb-3 ${fileName ? 'text-green-500' : 'text-slate-400'}`} />
                                                 <p className="mb-2 text-sm text-slate-500">
-                                                    <span className="font-semibold text-slate-700">Klik untuk mengunggah</span> atau seret file ke sini
+                                                    <span className="font-semibold text-slate-700">Klik untuk mengunggah</span> atau seret foto ke sini
                                                 </p>
-                                                <p className="text-xs text-slate-500 font-medium">Hanya PDF (Maks. 5MB)</p>
+                                                <p className="text-xs text-slate-500 font-medium">JPG, PNG, atau WebP (Maks. 5MB)</p>
                                             </div>
                                         </label>
                                         {fileName && (
@@ -252,7 +252,7 @@ export default function LaporSptPage() {
                                     </div>
                                     <p className="mt-2 text-xs text-slate-500 bg-blue-50 text-blue-700 p-2 rounded-lg border border-blue-100">
                                         <AlertCircle className="inline w-3 h-3 mr-1" />
-                                        File Anda akan otomatis diubah namanya menjadi format: <strong>Nama_NIP_Tahun.pdf</strong>
+                                        File Anda akan otomatis diubah namanya menjadi format: <strong>Nama_NIP_Tahun.ekstensi</strong>
                                     </p>
                                 </div>
 

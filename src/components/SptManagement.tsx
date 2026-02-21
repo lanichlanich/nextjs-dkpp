@@ -12,7 +12,8 @@ import {
     Square,
     DownloadCloud,
     SearchX,
-    Loader2
+    Loader2,
+    Image as ImageIcon
 } from "lucide-react";
 import { SptReport } from "@prisma/client";
 import { deleteSptReport } from "@/actions/spt";
@@ -148,7 +149,7 @@ export function SptManagement({ initialReports, pagination }: SptManagementProps
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="flex items-center gap-4">
                     <div className="bg-green-100 p-3 rounded-2xl">
-                        <FileText className="w-8 h-8 text-green-600" />
+                        <ImageIcon className="w-8 h-8 text-green-600" />
                     </div>
                     <div>
                         <h1 className="text-3xl font-black text-gray-900 tracking-tight">Laporan SPT</h1>
@@ -312,7 +313,7 @@ export function SptManagement({ initialReports, pagination }: SptManagementProps
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
-                                                    title="Unduh / Lihat PDF"
+                                                    title="Unduh / Lihat File"
                                                 >
                                                     <Download className="w-5 h-5" />
                                                 </a>
