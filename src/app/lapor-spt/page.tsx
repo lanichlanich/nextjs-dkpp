@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { FileText, Send, CheckCircle2, AlertCircle, UploadCloud, Search, User } from "lucide-react";
@@ -215,6 +216,28 @@ export default function LaporSptPage() {
                                             <option key={y} value={y}>{y}</option>
                                         ))}
                                     </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Contoh Bukti BPE yang Harus Diupload</label>
+                                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 mb-4">
+                                        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg border border-slate-200 shadow-sm transition-all hover:shadow-md cursor-zoom-in group" onClick={() => window.open('/images/example-bpe.png', '_blank')}>
+                                            <Image
+                                                src="/images/example-bpe.png"
+                                                alt="Contoh Bukti Penerimaan Elektronik (BPE)"
+                                                fill
+                                                className="object-contain p-1 group-hover:scale-105 transition-transform duration-500"
+                                            />
+                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors flex items-center justify-center">
+                                                <div className="bg-white/90 px-3 py-1.5 rounded-full text-[10px] font-bold text-slate-600 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    Klik untuk memperbesar
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <p className="mt-2 text-[11px] text-slate-500 leading-relaxed italic">
+                                            * Gambar di atas adalah contoh <strong>Bukti Penerimaan Elektronik (BPE)</strong> yang valid dari DJP Online. Pastikan bukti yang Anda upload serupa dengan format ini.
+                                        </p>
+                                    </div>
                                 </div>
 
                                 <div>
