@@ -119,3 +119,16 @@ model JdihDocument {
   @@index([type])
   @@index([year])
 }
+
+model SptReport {
+  id          String   @id @default(cuid())
+  name        String
+  nip         String
+  year        String
+  filePath    String
+  fileName    String
+  createdAt   DateTime @default(now())
+  
+  @@index([nip])
+  @@index([year])
+}

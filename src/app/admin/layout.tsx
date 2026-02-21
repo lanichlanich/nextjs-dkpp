@@ -126,6 +126,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             show: true
         },
         {
+            name: "Lapor SPT",
+            href: "/admin/spt",
+            icon: FileText,
+            show: true
+        },
+        {
             name: "Pengaturan",
             href: "/admin/settings",
             icon: Settings,

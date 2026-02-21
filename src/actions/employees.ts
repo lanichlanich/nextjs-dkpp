@@ -73,3 +73,23 @@ export async function bulkUpdateEmployeesAction(ids: string[], data: Partial<Emp
         return { error: error.message || "Gagal memperbarui data pegawai secara massal" };
     }
 }
+
+export async function getEmployeesForSelect() {
+    try {
+        const employees = await (prisma as any).employee.findMany({
+            select: {
+                id: true,
+                name: true,
+                nip: true,
+            },
+            orderBy: {
+                name: 'asc'
+            }
+        });
+        return { success: true, data: employees };
+    } catch (error: any) {
+        console.error("Error fetching employees for select:", error);
+        return { success: false, error: "Gagal mengambil daftar pegawai" };
+    }
+}
+

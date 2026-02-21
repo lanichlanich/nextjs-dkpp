@@ -62,6 +62,10 @@ export function Navbar() {
               JDIH
             </Link>
 
+            <Link href="/lapor-spt" className="text-gray-700 hover:text-green-600 transition-colors font-medium">
+              Lapor SPT
+            </Link>
+
             <Link href="#services" className="text-gray-700 hover:text-green-600 transition-colors font-medium">
               Layanan
             </Link>
@@ -70,9 +74,6 @@ export function Navbar() {
             </Link>
             <Link href="#contact" className="text-gray-700 hover:text-green-600 transition-colors font-medium">
               Kontak
-            </Link>
-            <Link href="/login" className="px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors font-medium">
-              Login Pegawai
             </Link>
           </div>
           <div className="flex items-center md:hidden">
@@ -143,6 +144,14 @@ export function Navbar() {
             </Link>
 
             <Link
+              href="/lapor-spt"
+              className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-green-600 hover:bg-gray-50"
+              onClick={() => setIsOpen(false)}
+            >
+              Lapor SPT
+            </Link>
+
+            <Link
               href="#services"
               className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-green-600 hover:bg-gray-50"
               onClick={() => setIsOpen(false)}
@@ -162,13 +171,6 @@ export function Navbar() {
               onClick={() => setIsOpen(false)}
             >
               Kontak
-            </Link>
-            <Link
-              href="/login"
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-green-600 hover:bg-gray-50"
-              onClick={() => setIsOpen(false)}
-            >
-              Login Pegawai
             </Link>
           </div>
         </div>
