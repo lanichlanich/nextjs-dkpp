@@ -33,11 +33,11 @@ export async function getProfileData(): Promise<ProfileData> {
         }
 
         return {
-            dasarHukum: profile.dasarHukum as string[],
-            strukturOrganisasi: profile.strukturOrganisasi as any,
-            uptd: profile.uptd as any,
-            tugasFungsi: profile.tugasFungsi as string[],
-            jabatanTataKerja: profile.jabatanTataKerja as string[]
+            dasarHukum: JSON.parse(profile.dasarHukum || "[]") as string[],
+            strukturOrganisasi: JSON.parse(profile.strukturOrganisasi || "{}") as any,
+            uptd: JSON.parse(profile.uptd || "{}") as any,
+            tugasFungsi: JSON.parse(profile.tugasFungsi || "[]") as string[],
+            jabatanTataKerja: JSON.parse(profile.jabatanTataKerja || "[]") as string[]
         };
     } catch (error) {
         console.error("Error reading profile data from DB:", error);
@@ -52,9 +52,17 @@ export async function getProfileData(): Promise<ProfileData> {
 }
 
 export async function saveProfileData(data: ProfileData): Promise<void> {
+    const stringifiedData = {
+        dasarHukum: JSON.stringify(data.dasarHukum),
+        strukturOrganisasi: JSON.stringify(data.strukturOrganisasi),
+        uptd: JSON.stringify(data.uptd),
+        tugasFungsi: JSON.stringify(data.tugasFungsi),
+        jabatanTataKerja: JSON.stringify(data.jabatanTataKerja),
+    };
+
     await prisma.profile.upsert({
         where: { id: 1 },
-        update: data as any,
-        create: { id: 1, ...data } as any,
+        update: stringifiedData,
+        create: { id: 1, ...stringifiedData },
     });
 }

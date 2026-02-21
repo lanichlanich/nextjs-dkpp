@@ -1,16 +1,10 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+generator client {
+  provider = "prisma-client-js"
+}
 
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
-}
-
-generator client {
-  provider = "prisma-client-js"
 }
 
 model User {
@@ -33,12 +27,12 @@ model News {
 }
 
 model Profile {
-  id                Int      @id @default(1)
-  dasarHukum        Json
-  strukturOrganisasi Json
-  uptd              Json
-  tugasFungsi       Json
-  jabatanTataKerja  Json
+  id                 Int    @id @default(1)
+  dasarHukum         String @db.LongText
+  strukturOrganisasi String @db.LongText
+  uptd               String @db.LongText
+  tugasFungsi        String @db.LongText
+  jabatanTataKerja   String @db.LongText
 }
 
 model Setting {
@@ -50,55 +44,55 @@ model Setting {
 }
 
 model Employee {
-  id         String              @id @default(cuid())
+  id         String             @id @default(cuid())
   name       String
-  nip        String              @unique
+  nip        String             @unique
   birthPlace String
-  gender     String              @default("Laki-laki")
-  status     String              @default("PNS")
-  keaktifan  String              @default("Aktif")
-  golongan   String              @default("-")
+  createdAt  DateTime           @default(now())
+  golongan   String             @default("-")
+  keaktifan  String             @default("Aktif")
+  status     String             @default("PNS")
+  gender     String             @default("Laki-laki")
   positionId String?
-  position   Position?           @relation(fields: [positionId], references: [id])
-  createdAt  DateTime            @default(now())
+  position   Position?          @relation(fields: [positionId], references: [id])
   documents  EmployeeDocument[]
-  
+
   @@index([positionId])
 }
 
 model Position {
-  id                String     @id @default(cuid())
+  id                String             @id @default(cuid())
   namaJabatan       String
-  jenisJabatan      String     // "Struktural", "Fungsional", "Pelaksana"
-  eselon            String?    // Only for Struktural
-  jenjangFungsional String?    // Only for Fungsional
-  jenisPelaksana    String?    // Only for Pelaksana
-  batasUsiaPensiun  Int        // 58, 60, or 65
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
+  jenisJabatan      String
+  eselon            String?
+  jenjangFungsional String?
+  jenisPelaksana    String?
+  batasUsiaPensiun  Int
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
   employees         Employee[]
   documents         EmployeeDocument[]
-  
+
   @@index([jenisJabatan])
 }
 
 model EmployeeDocument {
-  id            String   @id @default(cuid())
-  employeeId    String
-  employee      Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  documentType  String   // "SK_CPNS", "SK_PNS", "SK_PPPK", "SKP", "SK_JABATAN"
-  nomorSurat    String?  // Optional for SKP
-  tanggalSurat  DateTime? // Optional for SKP
-  tanggalMulai  DateTime? // Optional for SKP
-  tahunSKP      String?  // Only for SKP documents
-  predikat      String?  // Only for SKP: "Baik", "Sangat Baik", "Perlu Perbaikan", "Kurang", "Sangat Kurang"
-  positionId    String?  // Only for SK_JABATAN
-  position      Position? @relation(fields: [positionId], references: [id])
-  filePath      String
-  fileName      String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
+  id           String    @id @default(cuid())
+  employeeId   String
+  documentType String
+  nomorSurat   String?
+  tanggalSurat DateTime?
+  tanggalMulai DateTime?
+  tahunSKP     String?
+  filePath     String
+  fileName     String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  predikat     String?
+  positionId   String?
+  employee     Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  position     Position? @relation(fields: [positionId], references: [id])
+
   @@index([employeeId])
   @@index([documentType])
   @@index([positionId])
@@ -107,7 +101,7 @@ model EmployeeDocument {
 model JdihDocument {
   id          String   @id @default(cuid())
   title       String
-  type        String   // e.g., "Peraturan Daerah", "Peraturan Bupati", "Keputusan Bupati"
+  type        String
   number      String
   year        String
   description String?  @db.Text
@@ -121,14 +115,14 @@ model JdihDocument {
 }
 
 model SptReport {
-  id          String   @id @default(cuid())
-  name        String
-  nip         String
-  year        String
-  filePath    String
-  fileName    String
-  createdAt   DateTime @default(now())
-  
+  id        String   @id @default(cuid())
+  name      String
+  nip       String
+  year      String
+  filePath  String
+  fileName  String
+  createdAt DateTime @default(now())
+
   @@index([nip])
   @@index([year])
 }

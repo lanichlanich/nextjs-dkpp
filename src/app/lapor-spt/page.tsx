@@ -39,6 +39,8 @@ export default function LaporSptPage() {
         emp.nip.includes(searchTerm)
     );
 
+    const [imageError, setImageError] = useState(false);
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const form = e.currentTarget;
@@ -221,18 +223,31 @@ export default function LaporSptPage() {
                                 <div>
                                     <label className="block text-sm font-semibold text-slate-700 mb-2">Contoh Bukti BPE yang Harus Diupload</label>
                                     <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 mb-4">
-                                        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg border border-slate-200 shadow-sm transition-all hover:shadow-md cursor-zoom-in group" onClick={() => window.open('/images/example-bpe.png', '_blank')}>
-                                            <Image
-                                                src="/images/example-bpe.png"
-                                                alt="Contoh Bukti Penerimaan Elektronik (BPE)"
-                                                fill
-                                                className="object-contain p-1 group-hover:scale-105 transition-transform duration-500"
-                                            />
-                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors flex items-center justify-center">
-                                                <div className="bg-white/90 px-3 py-1.5 rounded-full text-[10px] font-bold text-slate-600 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    Klik untuk memperbesar
+                                        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg border border-slate-200 shadow-sm transition-all hover:shadow-md cursor-zoom-in group" onClick={() => !imageError && window.open('/images/example-bpe.png', '_blank')}>
+                                            {imageError ? (
+                                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-100 text-slate-400 p-4 text-center">
+                                                    <AlertCircle className="w-8 h-8 mb-2" />
+                                                    <p className="text-[10px] font-bold uppercase tracking-wider leading-relaxed">
+                                                        Gambar contoh belum diupload ke <br />
+                                                        <span className="text-slate-600">public/images/example-bpe.png</span>
+                                                    </p>
                                                 </div>
-                                            </div>
+                                            ) : (
+                                                <>
+                                                    <Image
+                                                        src="/images/example-bpe.png"
+                                                        alt="Contoh Bukti Penerimaan Elektronik (BPE)"
+                                                        fill
+                                                        className="object-contain p-1 group-hover:scale-105 transition-transform duration-500"
+                                                        onError={() => setImageError(true)}
+                                                    />
+                                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors flex items-center justify-center">
+                                                        <div className="bg-white/90 px-3 py-1.5 rounded-full text-[10px] font-bold text-slate-600 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            Klik untuk memperbesar
+                                                        </div>
+                                                    </div>
+                                                </>
+                                            )}
                                         </div>
                                         <p className="mt-2 text-[11px] text-slate-500 leading-relaxed italic">
                                             * Gambar di atas adalah contoh <strong>Bukti Penerimaan Elektronik (BPE)</strong> yang valid dari DJP Online. Pastikan bukti yang Anda upload serupa dengan format ini.
