@@ -24,9 +24,16 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Swal from "sweetalert2";
-import { saveDocumentAction, deleteDocumentAction } from "@/actions/history";
+import {
+    saveDocumentAction,
+    deleteDocumentAction,
+    getPaktaIntegritasDocumentsAction,
+    getFileAsBase64Action
+} from "@/actions/history";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useEffect } from "react";
+import JSZip from "jszip";
+import { saveAs } from "file-saver";
 
 interface HistoryManagementProps {
     employees: EmployeeDisplay[];
@@ -40,21 +47,24 @@ export function HistoryManagement({ employees, initialDocuments, positions }: Hi
     const pathname = usePathname();
 
     const [searchTerm, setSearchTerm] = useState('');
+    const [keaktifanFilter, setKeaktifanFilter] = useState<string>('Semua');
     const urlEmpId = searchParams.get("empId");
     const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(urlEmpId);
     const [showUploadModal, setShowUploadModal] = useState(false);
     const [editingDocument, setEditingDocument] = useState<EmployeeDocument | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [documentType, setDocumentType] = useState<'SK_CPNS' | 'SK_PNS' | 'SK_PPPK' | 'SKP' | 'SK_JABATAN' | null>(null);
+    const [documentType, setDocumentType] = useState<'SK_CPNS' | 'SK_PNS' | 'SK_PPPK' | 'SKP' | 'SK_JABATAN' | 'PAKTA_INTEGRITAS' | null>(null);
     const [formData, setFormData] = useState({
         nomorSurat: '',
         tanggalSurat: '',
         tanggalMulai: '',
-        tahunSKP: '',
+        tahunSKP: '2026',
         predikat: '',
         positionId: ''
     });
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [isDownloadingZip, setIsDownloadingZip] = useState(false);
+    const [downloadProgress, setDownloadProgress] = useState({ current: 0, total: 0 });
 
     // Sync selection with URL
     const handleSelectEmployee = (id: string) => {
@@ -70,11 +80,13 @@ export function HistoryManagement({ employees, initialDocuments, positions }: Hi
         [employees, selectedEmployeeId]);
 
     const filteredEmployees = useMemo(() =>
-        employees.filter(emp =>
-            emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            emp.nip.includes(searchTerm)
-        ),
-        [employees, searchTerm]);
+        employees.filter(emp => {
+            const matchesSearch = emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                emp.nip.includes(searchTerm);
+            const matchesKeaktifan = keaktifanFilter === 'Semua' || emp.keaktifan === keaktifanFilter;
+            return matchesSearch && matchesKeaktifan;
+        }),
+        [employees, searchTerm, keaktifanFilter]);
 
     const employeeDocuments = useMemo(() =>
         initialDocuments.filter(d => d.employeeId === selectedEmployeeId),
@@ -109,6 +121,7 @@ export function HistoryManagement({ employees, initialDocuments, positions }: Hi
             case 'SK_PPPK': return `sk_pppk_${nip}.pdf`;
             case 'SKP': return `skp_${nip}_${formData.tahunSKP || 'tahun'}.pdf`;
             case 'SK_JABATAN': return `sk_jabatan_${nip}.pdf`;
+            case 'PAKTA_INTEGRITAS': return `${nip}_${selectedEmployee.name.replace(/\s+/g, '_')}.pdf`;
             default: return '';
         }
     };
@@ -136,9 +149,11 @@ export function HistoryManagement({ employees, initialDocuments, positions }: Hi
                 formDataToSend.append('documentId', editingDocument.id);
             }
 
-            if (documentType === 'SKP') {
+            if (documentType === 'SKP' || documentType === 'PAKTA_INTEGRITAS') {
                 formDataToSend.append('tahunSKP', formData.tahunSKP);
-                formDataToSend.append('predikat', formData.predikat);
+                if (documentType === 'SKP') {
+                    formDataToSend.append('predikat', formData.predikat);
+                }
             } else {
                 formDataToSend.append('nomorSurat', formData.nomorSurat);
                 formDataToSend.append('tanggalSurat', formData.tanggalSurat);
@@ -162,7 +177,7 @@ export function HistoryManagement({ employees, initialDocuments, positions }: Hi
                     showConfirmButton: false,
                     timer: 3000
                 });
-                setFormData({ nomorSurat: '', tanggalSurat: '', tanggalMulai: '', tahunSKP: '', predikat: '', positionId: '' });
+                setFormData({ nomorSurat: '', tanggalSurat: '', tanggalMulai: '', tahunSKP: '2026', predikat: '', positionId: '' });
                 setSelectedFile(null);
                 setShowUploadModal(false);
                 setDocumentType(null);
@@ -220,24 +235,122 @@ export function HistoryManagement({ employees, initialDocuments, positions }: Hi
         return acc;
     }, {} as Record<string, EmployeeDocument[]>);
 
+    const handleBulkDownload = async () => {
+        setIsDownloadingZip(true);
+        setDownloadProgress({ current: 0, total: 0 });
+
+        try {
+            const result = await getPaktaIntegritasDocumentsAction();
+            if ('error' in result) {
+                Swal.fire('Error', result.error, 'error');
+                return;
+            }
+
+            const docs = result.data || [];
+            if (docs.length === 0) {
+                Swal.fire('Info', 'Tidak ada dokumen Pakta Integritas yang ditemukan', 'info');
+                return;
+            }
+
+            setDownloadProgress({ current: 0, total: docs.length });
+            const zip = new JSZip();
+            const paktaFolder = zip.folder("Pakta_Integritas");
+
+            for (let i = 0; i < docs.length; i++) {
+                const doc = docs[i];
+                setDownloadProgress(prev => ({ ...prev, current: i + 1 }));
+
+                try {
+                    const fileResult = await getFileAsBase64Action(doc.filePath);
+                    if ('base64' in fileResult && fileResult.base64 && paktaFolder) {
+                        paktaFolder.file(doc.fileName, fileResult.base64, { base64: true });
+                    }
+                } catch (err) {
+                    console.error(`Gagal mengunduh file ${doc.fileName}:`, err);
+                }
+            }
+
+            const content = await zip.generateAsync({ type: "blob" });
+            saveAs(content, `Pakta_Integritas_${new Date().toISOString().split('T')[0]}.zip`);
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil',
+                text: 'File ZIP berhasil dibuat dan diunduh',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000
+            });
+        } catch (error) {
+            Swal.fire('Error', 'Gagal memproses bulk download', 'error');
+        } finally {
+            setIsDownloadingZip(false);
+        }
+    };
+
     return (
         <div className="flex h-[calc(100vh-120px)] overflow-hidden gap-6">
             {/* Sidebar: Employee Selection */}
             <div className="w-80 flex-shrink-0 flex flex-col bg-white rounded-3xl border border-gray-100 shadow-xl shadow-gray-200/50 overflow-hidden">
                 <div className="p-5 border-b border-gray-50 bg-gray-50/50">
-                    <h2 className="text-xl font-black text-gray-900 mb-4 flex items-center gap-2">
-                        <User className="w-5 h-5 text-green-600" />
-                        Pilih Pegawai
-                    </h2>
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Cari NIP atau Nama..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all text-sm font-medium text-gray-900"
-                        />
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-xl font-black text-gray-900 flex items-center gap-2">
+                            <User className="w-5 h-5 text-green-600" />
+                            Pilih Pegawai
+                        </h2>
+                        <button
+                            onClick={handleBulkDownload}
+                            disabled={isDownloadingZip}
+                            title="Download Semua Pakta Integritas (ZIP)"
+                            className="p-2 bg-green-50 text-green-600 hover:bg-green-600 hover:text-white rounded-xl transition-all disabled:opacity-50"
+                        >
+                            {isDownloadingZip ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                                <Download className="w-4 h-4" />
+                            )}
+                        </button>
+                    </div>
+                    {isDownloadingZip && (
+                        <div className="mb-4">
+                            <div className="flex justify-between text-[10px] font-bold text-green-600 mb-1">
+                                <span>Menyiapkan ZIP...</span>
+                                <span>{downloadProgress.current}/{downloadProgress.total}</span>
+                            </div>
+                            <div className="h-1 bg-green-100 rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-green-600 transition-all duration-300"
+                                    style={{ width: `${(downloadProgress.current / downloadProgress.total) * 100}%` }}
+                                />
+                            </div>
+                        </div>
+                    )}
+                    <div className="flex flex-col gap-3">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="Cari NIP atau Nama..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all text-sm font-medium text-gray-900"
+                            />
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Filter className="w-4 h-4 text-gray-400" />
+                            <select
+                                value={keaktifanFilter}
+                                onChange={(e) => setKeaktifanFilter(e.target.value)}
+                                className="flex-1 bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold text-gray-700 focus:ring-2 focus:ring-green-500/20 outline-none transition-all"
+                            >
+                                <option value="Semua">Semua Status</option>
+                                <option value="Aktif">Aktif</option>
+                                <option value="Pensiun">Pensiun</option>
+                                <option value="Pindah">Pindah</option>
+                                <option value="Diberhentikan">Diberhentikan</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
@@ -310,7 +423,7 @@ export function HistoryManagement({ employees, initialDocuments, positions }: Hi
                                     onClick={() => {
                                         setEditingDocument(null);
                                         setDocumentType(null);
-                                        setFormData({ nomorSurat: '', tanggalSurat: '', tanggalMulai: '', tahunSKP: '', predikat: '', positionId: '' });
+                                        setFormData({ nomorSurat: '', tanggalSurat: '', tanggalMulai: '', tahunSKP: '2026', predikat: '', positionId: '' });
                                         setSelectedFile(null);
                                         setShowUploadModal(true);
                                     }}
@@ -348,12 +461,16 @@ export function HistoryManagement({ employees, initialDocuments, positions }: Hi
                                                                     <FileCheck className="w-5 h-5 text-gray-400 group-hover:text-green-600" />
                                                                 </div>
                                                                 <div>
-                                                                    {doc.documentType === 'SKP' ? (
+                                                                    {doc.documentType === 'SKP' || doc.documentType === 'PAKTA_INTEGRITAS' ? (
                                                                         <>
-                                                                            <p className="font-bold text-gray-900 group-hover:text-green-900">SKP Tahun {doc.tahunSKP}</p>
-                                                                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">
-                                                                                Predikat: <span className="text-green-600">{doc.predikat}</span>
+                                                                            <p className="font-bold text-gray-900 group-hover:text-green-900">
+                                                                                {doc.documentType === 'PAKTA_INTEGRITAS' ? 'Pakta Integritas' : 'SKP'} Tahun {doc.tahunSKP}
                                                                             </p>
+                                                                            {doc.documentType === 'SKP' && (
+                                                                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">
+                                                                                    Predikat: <span className="text-green-600">{doc.predikat}</span>
+                                                                                </p>
+                                                                            )}
                                                                         </>
                                                                     ) : (
                                                                         <>
@@ -470,7 +587,8 @@ export function HistoryManagement({ employees, initialDocuments, positions }: Hi
                                             { type: 'SK_PNS', label: 'SK PNS' },
                                             { type: 'SK_PPPK', label: 'SK PPPK' },
                                             { type: 'SKP', label: 'SKP' },
-                                            { type: 'SK_JABATAN', label: 'SK Jabatan' }
+                                            { type: 'SK_JABATAN', label: 'SK Jabatan' },
+                                            { type: 'PAKTA_INTEGRITAS', label: 'Pakta Integritas' }
                                         ].map(({ type, label }) => (
                                             <button
                                                 key={type}
@@ -494,33 +612,37 @@ export function HistoryManagement({ employees, initialDocuments, positions }: Hi
                                         animate={{ opacity: 1, height: 'auto' }}
                                         className="space-y-4 overflow-hidden pt-4"
                                     >
-                                        {documentType === 'SKP' ? (
+                                        {documentType === 'SKP' || documentType === 'PAKTA_INTEGRITAS' ? (
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div>
-                                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Tahun SKP</label>
-                                                    <input
-                                                        type="text"
+                                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Tahun</label>
+                                                    <select
                                                         value={formData.tahunSKP}
                                                         onChange={(e) => setFormData({ ...formData, tahunSKP: e.target.value })}
-                                                        placeholder="2024"
-                                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition-all font-bold text-gray-900"
-                                                        required
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Predikat</label>
-                                                    <select
-                                                        value={formData.predikat}
-                                                        onChange={(e) => setFormData({ ...formData, predikat: e.target.value })}
                                                         className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition-all font-bold text-gray-900"
                                                         required
                                                     >
-                                                        <option value="">Pilih...</option>
-                                                        <option value="Sangat Baik">Sangat Baik</option>
-                                                        <option value="Baik">Baik</option>
-                                                        <option value="Perlu Perbaikan">Kurang</option>
+                                                        {Array.from({ length: 11 }, (_, i) => 2020 + i).map(year => (
+                                                            <option key={year} value={year.toString()}>{year}</option>
+                                                        ))}
                                                     </select>
                                                 </div>
+                                                {documentType === 'SKP' && (
+                                                    <div>
+                                                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Predikat</label>
+                                                        <select
+                                                            value={formData.predikat}
+                                                            onChange={(e) => setFormData({ ...formData, predikat: e.target.value })}
+                                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition-all font-bold text-gray-900"
+                                                            required
+                                                        >
+                                                            <option value="">Pilih...</option>
+                                                            <option value="Sangat Baik">Sangat Baik</option>
+                                                            <option value="Baik">Baik</option>
+                                                            <option value="Perlu Perbaikan">Kurang</option>
+                                                        </select>
+                                                    </div>
+                                                )}
                                             </div>
                                         ) : (
                                             <div className="space-y-4">

@@ -3,7 +3,7 @@ import prisma from './prisma';
 export interface EmployeeDocument {
     id: string;
     employeeId: string;
-    documentType: 'SK_CPNS' | 'SK_PNS' | 'SK_PPPK' | 'SKP' | 'SK_JABATAN';
+    documentType: 'SK_CPNS' | 'SK_PNS' | 'SK_PPPK' | 'SKP' | 'SK_JABATAN' | 'PAKTA_INTEGRITAS';
     nomorSurat?: string | null;
     tanggalSurat?: Date | null;
     tanggalMulai?: Date | null;
@@ -24,7 +24,7 @@ export interface EmployeeDocument {
 export interface DocumentInput {
     id?: string;
     employeeId: string;
-    documentType: 'SK_CPNS' | 'SK_PNS' | 'SK_PPPK' | 'SKP' | 'SK_JABATAN';
+    documentType: 'SK_CPNS' | 'SK_PNS' | 'SK_PPPK' | 'SKP' | 'SK_JABATAN' | 'PAKTA_INTEGRITAS';
     nomorSurat?: string;
     tanggalSurat?: Date;
     tanggalMulai?: Date;

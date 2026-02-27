@@ -1,10 +1,11 @@
 "use server";
 
-import { saveDocument, deleteDocument, getDocumentById } from "@/lib/history";
+import { saveDocument, deleteDocument, getDocumentById, getAllDocuments } from "@/lib/history";
 import { revalidatePath } from "next/cache";
 import { writeFile, unlink } from "fs/promises";
 import path from "path";
 import { uploadToServer } from "@/lib/upload";
+import prisma from "@/lib/prisma";
 
 export async function saveDocumentAction(formData: FormData) {
     try {
@@ -104,5 +105,41 @@ export async function deleteDocumentAction(id: string) {
         return { success: true };
     } catch (error: any) {
         return { error: error.message || "Gagal menghapus dokumen" };
+    }
+}
+
+export async function getPaktaIntegritasDocumentsAction() {
+    try {
+        const documents = await getAllDocuments();
+        const paktaIntegritas = documents.filter(doc => doc.documentType === 'PAKTA_INTEGRITAS');
+
+        // Include employee names in the result
+        const result = await Promise.all(paktaIntegritas.map(async (doc) => {
+            const employee = await (prisma as any).employee.findUnique({
+                where: { id: doc.employeeId },
+                select: { name: true, nip: true }
+            });
+            return {
+                ...doc,
+                employeeName: employee?.name || 'Unknown',
+                employeeNip: employee?.nip || 'Unknown'
+            };
+        }));
+
+        return { success: true, data: result };
+    } catch (error: any) {
+        return { error: error.message || "Gagal mengambil data Pakta Integritas" };
+    }
+}
+
+export async function getFileAsBase64Action(url: string) {
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Gagal mengambil file");
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        return { success: true, base64: buffer.toString('base64') };
+    } catch (error: any) {
+        return { error: error.message || "Gagal mengambil file" };
     }
 }
