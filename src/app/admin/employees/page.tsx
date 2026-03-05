@@ -3,6 +3,8 @@ import { getPositions } from "@/lib/positions";
 import { EmployeeManagement } from "@/components/EmployeeManagement";
 import { Briefcase } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminEmployeesPage() {
     const employees = await getEmployees();
     const positions = await getPositions();

@@ -2,7 +2,9 @@ import { getEmployees } from "@/lib/employees";
 import { KgbManagement } from "@/components/KgbManagement";
 import { FileText } from "lucide-react";
 
-export default async function AdminKgbPage() {
+export const dynamic = "force-dynamic";
+
+export default async function KgbPage() {
     const employees = await getEmployees();
 
     return (

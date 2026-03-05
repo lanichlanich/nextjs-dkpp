@@ -2,7 +2,9 @@ import { getNews } from "@/lib/news";
 import { NewsManagement } from "@/components/NewsManagement";
 import { getSettings } from "@/lib/settings";
 
-export default async function NewsPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AdminNewsPage() {
     const news = await getNews();
     const settings = await getSettings();
 

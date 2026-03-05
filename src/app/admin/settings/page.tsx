@@ -4,7 +4,9 @@ import { Settings, ShieldAlert } from "lucide-react";
 import { verifyRole } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
-export default async function SettingsPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AdminSettingsPage() {
     const isAdmin = await verifyRole("Admin");
     if (!isAdmin) {
         redirect("/admin/dashboard");

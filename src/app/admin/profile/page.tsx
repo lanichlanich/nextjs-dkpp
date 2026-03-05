@@ -4,6 +4,8 @@ import { getProfileData } from "@/lib/profile";
 import { redirect } from "next/navigation";
 import { ProfileManagement } from "@/components/ProfileManagement";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminProfilePage() {
     const session = await getSession();
     if (!session) redirect("/login");

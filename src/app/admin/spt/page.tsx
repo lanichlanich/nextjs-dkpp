@@ -14,6 +14,8 @@ interface PageProps {
     }>;
 }
 
+export const dynamic = "force-dynamic";
+
 export default async function SptAdminPage({ searchParams }: PageProps) {
     const params = await searchParams;
     const page = parseInt(params.page || "1");

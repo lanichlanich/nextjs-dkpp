@@ -3,6 +3,8 @@ import { UserManagement } from "@/components/UserManagement";
 import { Shield, Users } from "lucide-react";
 import { getSettings } from "@/lib/settings";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminUsersPage() {
     const users = await getUsers();
     const settings = await getSettings();

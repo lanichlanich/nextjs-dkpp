@@ -5,6 +5,8 @@ import { getPositions } from "@/lib/positions";
 import Link from "next/link";
 import { DashboardCharts } from "@/components/DashboardCharts";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardPage() {
     const [news, employees, positions] = await Promise.all([
         getNews(),
@@ -147,7 +149,7 @@ export default async function DashboardPage() {
                                 <h4 className="font-bold text-gray-900 truncate">{item.title}</h4>
                                 <div className="flex items-center gap-2 mt-1">
                                     <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${item.status === 'Published' ? 'bg-green-100 text-green-700' :
-                                            item.status === 'Draft' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'
+                                        item.status === 'Draft' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'
                                         }`}>
                                         {item.status}
                                     </span>
