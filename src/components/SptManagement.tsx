@@ -23,6 +23,7 @@ import { motion } from "framer-motion";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
+import * as XLSX from "xlsx";
 
 interface SptManagementProps {
     initialReports: SptReport[];
@@ -144,6 +145,44 @@ export function SptManagement({ initialReports, pagination }: SptManagementProps
         }
     };
 
+    const handleExportExcel = () => {
+        const dataToExport = initialReports.map((report) => ({
+            "Nama Pegawai": report.name,
+            "NIP": report.nip,
+            "Tahun Pajak": report.year,
+            "Tanggal Kirim": new Date(report.createdAt).toLocaleString('id-ID'),
+            "Link File": report.filePath,
+            "Nama File": report.fileName
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Laporan SPT");
+
+        // Set column widths
+        const wscols = [
+            { wch: 30 }, // Nama
+            { wch: 25 }, // NIP
+            { wch: 15 }, // Tahun
+            { wch: 25 }, // Tanggal
+            { wch: 60 }, // Link
+            { wch: 40 }, // File
+        ];
+        worksheet["!cols"] = wscols;
+
+        XLSX.writeFile(workbook, `Laporan_SPT_${selectedYear || "Semua"}_${new Date().toISOString().split('T')[0]}.xlsx`);
+
+        Swal.fire({
+            icon: "success",
+            title: "Berhasil",
+            text: "Data berhasil diekspor ke Excel.",
+            toast: true,
+            position: "top-end",
+            showConfirmButton: false,
+            timer: 3000
+        });
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -173,6 +212,14 @@ export function SptManagement({ initialReports, pagination }: SptManagementProps
                         Unduh Terpilih ({selectedIds.length})
                     </motion.button>
                 )}
+
+                <button
+                    onClick={handleExportExcel}
+                    className="flex items-center gap-2 px-6 py-3 bg-green-50 text-green-700 border-2 border-green-100 font-black rounded-2xl hover:bg-green-100 transition-all active:scale-95"
+                >
+                    <FileText className="w-5 h-5" />
+                    Ekspor Excel
+                </button>
             </div>
 
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
