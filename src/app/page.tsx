@@ -8,6 +8,7 @@ import Link from "next/link";
 import { MotionWrapper } from "@/components/MotionWrapper";
 import { YouTubeVideos } from "@/components/YouTubeVideos";
 
+export const dynamic = "force-dynamic";
 export const revalidate = 60; // Revalidate every 60 seconds
 
 export default async function Home() {

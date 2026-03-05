@@ -9,6 +9,7 @@ import { MotionWrapper } from "@/components/MotionWrapper";
 import { SocialShare } from "@/components/SocialShare";
 import { LatestNewsSidebar } from "@/components/LatestNewsSidebar";
 
+export const dynamic = "force-dynamic";
 export const revalidate = 60;
 
 export default async function NewsDetailPage({ params }: { params: Promise<{ id: string }> }) {
