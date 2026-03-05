@@ -31,6 +31,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const [settings, setSettings] = useState<SystemSettings | null>(null);
     const [currentUser, setCurrentUser] = useState<SessionData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isPageLoading, setIsPageLoading] = useState(false);
 
     useEffect(() => {
         const init = async () => {
@@ -56,6 +57,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         init();
     }, [router]);
+
+    useEffect(() => {
+        setIsPageLoading(true);
+        const timer = setTimeout(() => setIsPageLoading(false), 500);
+        return () => clearTimeout(timer);
+    }, [pathname]);
 
     const handleLogout = async () => {
         await logoutAction();
@@ -218,7 +225,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     </div>
                 </header>
 
-                <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+                <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative">
+                    {/* Top Progress Bar */}
+                    <AnimatePresence>
+                        {isPageLoading && (
+                            <motion.div
+                                initial={{ width: "0%", opacity: 1 }}
+                                animate={{ width: "100%", opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 0.5, ease: "easeInOut" }}
+                                className="absolute top-0 left-0 h-1 bg-green-500 z-50 shadow-[0_0_10px_rgba(34,197,94,0.5)]"
+                            />
+                        )}
+                    </AnimatePresence>
+
                     <MotionWrapper direction="up" delay={0.1}>
                         {children}
                     </MotionWrapper>
