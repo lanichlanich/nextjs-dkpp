@@ -2,6 +2,8 @@ import { getJdihDocuments } from "@/lib/jdih";
 import { JdihManagement } from "@/components/JdihManagement";
 import { Scale } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminJdihPage() {
     const documents = await getJdihDocuments();
 
