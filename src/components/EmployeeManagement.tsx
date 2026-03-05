@@ -15,8 +15,6 @@ import {
     FileUp,
     FileText,
     Download,
-    Cake,
-    Clock,
     ShieldCheck,
     Hash,
     Loader2
@@ -441,42 +439,7 @@ export function EmployeeManagement({ initialEmployees, positions }: EmployeeMana
         }
     };
 
-    // 4. Birthday Logic
-    const today = new Date();
-    const currentDay = today.getDate();
-    const currentMonth = today.getMonth() + 1; // 1-12
-
-    const birthdaysToday = employees.filter(emp =>
-        emp.birthDay === currentDay && emp.birthMonth === currentMonth
-    );
-
-    const upcomingBirthdays = employees.filter(emp => {
-        // Check next 7 days
-        for (let i = 1; i <= 7; i++) {
-            const checkDate = new Date();
-            checkDate.setDate(today.getDate() + i);
-            if (emp.birthDay === checkDate.getDate() && emp.birthMonth === (checkDate.getMonth() + 1)) {
-                (emp as any).daysUntil = i;
-                return true;
-            }
-        }
-        return false;
-    }).sort((a, b) => (a as any).daysUntil - (b as any).daysUntil);
-
-    // 5. Retirement Logic (1-2 Years)
-    // We already have `retirementYear` in EmployeeDisplay calculated from `getEmployees`
-    const currentYear = new Date().getFullYear();
-    const retiringSoon = employees.filter(emp => {
-        if (!emp.retirementYear) return false;
-        const yearsLeft = emp.retirementYear - currentYear;
-        // warn if retiring in 1 or 2 years (next year or the year after)
-        // If yearsLeft <= 0, they are already retired or retiring this year (handled by existing isRetiringThisYear flag maybe? or just verify)
-        // The requirement is "1 sd 2 tahun kedepan"
-        return yearsLeft >= 1 && yearsLeft <= 2;
-    }).map(emp => ({
-        ...emp,
-        yearsLeft: (emp.retirementYear || 0) - currentYear
-    })).sort((a, b) => a.yearsLeft - b.yearsLeft);
+    // 3. Pagination logic
 
     return (
         <div className="space-y-6">
@@ -541,153 +504,6 @@ export function EmployeeManagement({ initialEmployees, positions }: EmployeeMana
                 accept=".xlsx, .xls"
                 className="hidden"
             />
-
-            {/* Birthday Section */}
-            {(birthdaysToday.length > 0 || upcomingBirthdays.length > 0) && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {birthdaysToday.length > 0 && (
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="bg-gradient-to-br from-pink-500 to-rose-600 rounded-3xl p-6 shadow-xl shadow-rose-100 text-white relative overflow-hidden group"
-                        >
-                            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform duration-500">
-                                <Cake className="w-32 h-32" />
-                            </div>
-                            <div className="relative z-10">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
-                                        <Cake className="w-6 h-6 text-white" />
-                                    </div>
-                                    <h2 className="text-xl font-black uppercase tracking-wider">Ulang Tahun Hari Ini!</h2>
-                                </div>
-                                <div className="space-y-3">
-                                    {birthdaysToday.map(emp => (
-                                        <div key={emp.id} className="flex items-center justify-between bg-white/10 hover:bg-white/20 p-3 rounded-2xl backdrop-blur-sm transition-colors cursor-default">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-white/30 flex items-center justify-center font-black text-xs">
-                                                    {emp.name.charAt(0)}
-                                                </div>
-                                                <span className="font-bold">{emp.name}</span>
-                                            </div>
-                                            <span className="text-[10px] font-black uppercase tracking-tighter bg-white text-rose-600 px-2 py-1 rounded-lg shadow-sm">
-                                                Barakallah!
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </motion.div>
-                    )}
-
-                    {upcomingBirthdays.length > 0 && (
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 text-gray-900 relative overflow-hidden group"
-                        >
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="p-2 bg-indigo-50 rounded-xl">
-                                    <Clock className="w-6 h-6 text-indigo-600" />
-                                </div>
-                                <h2 className="text-xl font-black text-gray-900 uppercase tracking-wider">Akan Datang</h2>
-                            </div>
-                            <div className="space-y-3">
-                                {upcomingBirthdays.map(emp => (
-                                    <div key={emp.id} className="flex items-center justify-between bg-gray-50 hover:bg-gray-100 p-3 rounded-2xl transition-colors cursor-default border border-gray-100/50">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-black text-xs">
-                                                {emp.name.charAt(0)}
-                                            </div>
-                                            <span className="font-bold text-gray-800">{emp.name}</span>
-                                        </div>
-                                        <div className="flex flex-col items-end">
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600">
-                                                {(emp as any).daysUntil === 1 ? 'Besok' : `${(emp as any).daysUntil} hari lagi`}
-                                            </span>
-                                            <span className="text-[9px] text-gray-400 font-bold">{emp.birthDate.split(' ').slice(0, 2).join(' ')}</span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </motion.div>
-                    )}
-                </div>
-            )}
-            {/* Retirement Sections */}
-            <div className="space-y-6 mb-6">
-                {/* 1. Retiring THIS YEAR (Red Alert) */}
-                {employees.filter(e => e.isRetiringThisYear).length > 0 && (
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="bg-red-50 rounded-3xl p-6 shadow-sm border border-red-100 text-gray-900 relative overflow-hidden group"
-                    >
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="p-2 bg-red-100 rounded-xl">
-                                <Clock className="w-6 h-6 text-red-600" />
-                            </div>
-                            <h2 className="text-xl font-black text-gray-900 uppercase tracking-wider">Pensiun Tahun Ini ({currentYear})</h2>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {employees.filter(e => e.isRetiringThisYear).map(emp => (
-                                <div key={emp.id} className="flex items-center justify-between bg-white p-4 rounded-2xl shadow-sm border-l-4 border-red-500">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-black text-lg">
-                                            {emp.name.charAt(0)}
-                                        </div>
-                                        <div>
-                                            <div className="font-bold text-gray-900 line-clamp-1">{emp.name}</div>
-                                            <div className="text-xs text-gray-500 line-clamp-1">{emp.position?.namaJabatan || '-'}</div>
-                                            <div className="mt-1 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 uppercase tracking-wide">
-                                                TMT: {emp.tmtPensiun}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </motion.div>
-                )}
-
-                {/* 2. Retiring Next 1-2 Years (Orange Warning) */}
-                {retiringSoon.length > 0 && (
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="bg-orange-50 rounded-3xl p-6 shadow-sm border border-orange-100 text-gray-900 relative overflow-hidden group"
-                    >
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="p-2 bg-orange-100 rounded-xl">
-                                <Clock className="w-6 h-6 text-orange-600" />
-                            </div>
-                            <h2 className="text-xl font-black text-gray-900 uppercase tracking-wider">Persiapan Pensiun (1-2 Tahun)</h2>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {retiringSoon.map(emp => (
-                                <div key={emp.id} className="flex items-center justify-between bg-white p-3 rounded-2xl shadow-sm border border-orange-100">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center font-black text-sm">
-                                            {emp.name.charAt(0)}
-                                        </div>
-                                        <div>
-                                            <div className="font-bold text-sm text-gray-900">{emp.name}</div>
-                                            <div className="text-xs text-gray-500">{emp.position?.namaJabatan || '-'}</div>
-                                            <div className="text-[10px] text-orange-600 font-bold mt-0.5">TMT: {emp.tmtPensiun}</div>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <span className="block text-xs font-black text-orange-600 uppercase tracking-wider">
-                                            {emp.yearsLeft} Thn Lagi
-                                        </span>
-                                        <span className="text-[10px] text-gray-400 font-bold">{emp.retirementYear}</span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </motion.div>
-                )}
-            </div>
 
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
                 <div className="flex flex-col md:flex-row gap-4 items-center justify-between">

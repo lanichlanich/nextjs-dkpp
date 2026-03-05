@@ -4,6 +4,7 @@ import { getEmployees } from "@/lib/employees";
 import { getPositions } from "@/lib/positions";
 import Link from "next/link";
 import { DashboardCharts } from "@/components/DashboardCharts";
+import { DashboardAlerts } from "@/components/DashboardAlerts";
 
 export const dynamic = "force-dynamic";
 
@@ -118,6 +119,9 @@ export default async function DashboardPage() {
                     </div>
                 ))}
             </div>
+
+            {/* Birthday & Retirement Alerts */}
+            <DashboardAlerts employees={employees} />
 
             {/* Charts Component */}
             <DashboardCharts
