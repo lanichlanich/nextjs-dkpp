@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -20,7 +20,7 @@ model News {
   id      String @id @default(cuid())
   title   String
   excerpt String @db.Text
-  content String @db.LongText
+  content String @db.Text
   date    String
   image   String
   status  String
@@ -28,11 +28,11 @@ model News {
 
 model Profile {
   id                 Int    @id @default(1)
-  dasarHukum         String @db.LongText
-  strukturOrganisasi String @db.LongText
-  uptd               String @db.LongText
-  tugasFungsi        String @db.LongText
-  jabatanTataKerja   String @db.LongText
+  dasarHukum         String @db.Text
+  strukturOrganisasi String @db.Text
+  uptd               String @db.Text
+  tugasFungsi        String @db.Text
+  jabatanTataKerja   String @db.Text
 }
 
 model Setting {

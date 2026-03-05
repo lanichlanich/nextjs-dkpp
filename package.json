@@ -12,6 +12,7 @@
   "dependencies": {
     "@heroui/react": "^2.8.9",
     "@prisma/client": "^6.19.2",
+    "@supabase/supabase-js": "^2.98.0",
     "@tailwindcss/typography": "^0.5.19",
     "@types/jszip": "^3.4.0",
     "docxtemplater": "^3.68.2",
