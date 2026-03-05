@@ -29,7 +29,8 @@ export function PositionManagement({ initialPositions }: PositionManagementProps
     // Pagination
     const urlPage = parseInt(searchParams.get("page") || "1");
     const [currentPage, setCurrentPage] = useState(urlPage);
-    const [itemsPerPage] = useState(10);
+    const urlLimit = parseInt(searchParams.get("limit") || "10");
+    const [itemsPerPage, setItemsPerPage] = useState(urlLimit);
 
     // Sync state with props when data is refreshed from server
     useEffect(() => {
@@ -41,6 +42,15 @@ export function PositionManagement({ initialPositions }: PositionManagementProps
         setCurrentPage(page);
         const params = new URLSearchParams(searchParams.toString());
         params.set("page", page.toString());
+        router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    };
+
+    const handleLimitChange = (limit: number) => {
+        setItemsPerPage(limit);
+        setCurrentPage(1);
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("limit", limit.toString());
+        params.set("page", "1");
         router.push(`${pathname}?${params.toString()}`, { scroll: false });
     };
 
@@ -399,6 +409,7 @@ export function PositionManagement({ initialPositions }: PositionManagementProps
                     onPageChange={handlePageChange}
                     totalItems={filteredPositions.length}
                     itemsPerPage={itemsPerPage}
+                    onLimitChange={handleLimitChange}
                 />
             </div>
 

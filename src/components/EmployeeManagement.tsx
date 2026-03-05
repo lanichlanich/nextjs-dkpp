@@ -75,7 +75,17 @@ export function EmployeeManagement({ initialEmployees, positions }: EmployeeMana
         params.set("page", page.toString());
         router.push(`${pathname}?${params.toString()}`, { scroll: false });
     };
-    const [itemsPerPage] = useState(10);
+
+    const handleLimitChange = (limit: number) => {
+        setItemsPerPage(limit);
+        setCurrentPage(1);
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("limit", limit.toString());
+        params.set("page", "1");
+        router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    };
+    const urlLimit = parseInt(searchParams.get("limit") || "10");
+    const [itemsPerPage, setItemsPerPage] = useState(urlLimit);
     const [sortField, setSortField] = useState<"name" | "nip">("name");
     const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
     const [filterGender, setFilterGender] = useState("");
@@ -1052,6 +1062,7 @@ export function EmployeeManagement({ initialEmployees, positions }: EmployeeMana
                     onPageChange={handlePageChange}
                     totalItems={filteredEmployees.length}
                     itemsPerPage={itemsPerPage}
+                    onLimitChange={handleLimitChange}
                     color="green"
                 />
             </div>

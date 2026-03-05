@@ -41,7 +41,8 @@ export function JdihManagement({ initialDocuments }: JdihManagementProps) {
     // Pagination & Filtering
     const urlPage = parseInt(searchParams.get("page") || "1");
     const [currentPage, setCurrentPage] = useState(urlPage);
-    const [itemsPerPage] = useState(10);
+    const urlLimit = parseInt(searchParams.get("limit") || "10");
+    const [itemsPerPage, setItemsPerPage] = useState(urlLimit);
     const [filterType, setFilterType] = useState("");
     const [filterYear, setFilterYear] = useState("");
 
@@ -55,6 +56,15 @@ export function JdihManagement({ initialDocuments }: JdihManagementProps) {
         setCurrentPage(page);
         const params = new URLSearchParams(searchParams.toString());
         params.set("page", page.toString());
+        router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    };
+
+    const handleLimitChange = (limit: number) => {
+        setItemsPerPage(limit);
+        setCurrentPage(1);
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("limit", limit.toString());
+        params.set("page", "1");
         router.push(`${pathname}?${params.toString()}`, { scroll: false });
     };
 
@@ -307,6 +317,7 @@ export function JdihManagement({ initialDocuments }: JdihManagementProps) {
                     onPageChange={handlePageChange}
                     totalItems={filteredDocuments.length}
                     itemsPerPage={itemsPerPage}
+                    onLimitChange={handleLimitChange}
                 />
             </div>
 

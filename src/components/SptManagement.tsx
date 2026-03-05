@@ -74,6 +74,13 @@ export function SptManagement({ initialReports, pagination }: SptManagementProps
         router.push(`${pathname}?${params.toString()}`);
     };
 
+    const handleLimitChange = (limit: number) => {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("limit", limit.toString());
+        params.set("page", "1");
+        router.push(`${pathname}?${params.toString()}`);
+    };
+
     const toggleSelectAll = () => {
         if (selectedIds.length === initialReports.length) {
             setSelectedIds([]);
@@ -395,6 +402,7 @@ export function SptManagement({ initialReports, pagination }: SptManagementProps
                     onPageChange={handlePageChange}
                     totalItems={pagination.total}
                     itemsPerPage={pagination.limit}
+                    onLimitChange={handleLimitChange}
                     color="green"
                 />
             </div>

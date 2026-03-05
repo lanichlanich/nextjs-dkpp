@@ -11,6 +11,7 @@ interface PageProps {
         page?: string;
         search?: string;
         year?: string;
+        limit?: string;
     }>;
 }
 
@@ -19,12 +20,13 @@ export const dynamic = "force-dynamic";
 export default async function SptAdminPage({ searchParams }: PageProps) {
     const params = await searchParams;
     const page = parseInt(params.page || "1");
+    const limit = parseInt(params.limit || "10");
     const search = params.search || "";
     const year = params.year || "";
 
     const result = await getSptReports({
         page,
-        limit: 10,
+        limit,
         search,
         year
     });
