@@ -1,5 +1,6 @@
 import { getEmployees } from "@/lib/employees";
 import { getPositions } from "@/lib/positions";
+import { getAllDocuments } from "@/lib/history";
 import { EmployeeManagement } from "@/components/EmployeeManagement";
 import { Briefcase } from "lucide-react";
 
@@ -8,6 +9,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminEmployeesPage() {
     const employees = await getEmployees();
     const positions = await getPositions();
+    const documents = await getAllDocuments();
 
     return (
         <div className="p-4 md:p-8">
@@ -28,7 +30,7 @@ export default async function AdminEmployeesPage() {
                 </div>
             </div>
 
-            <EmployeeManagement initialEmployees={employees} positions={positions} />
+            <EmployeeManagement initialEmployees={employees} initialDocuments={documents} positions={positions} />
         </div>
     );
 }

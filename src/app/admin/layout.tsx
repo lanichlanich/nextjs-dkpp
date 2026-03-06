@@ -121,12 +121,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             show: true
         },
         {
-            name: "Daftar Riwayat",
-            href: "/admin/history",
-            icon: FileText,
-            show: true
-        },
-        {
             name: "SK KGB",
             href: "/admin/kgb",
             icon: FileText,

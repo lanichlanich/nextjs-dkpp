@@ -23,6 +23,8 @@ import { Employee, EmployeeDisplay } from "@/lib/employees";
 import { Position } from "@/lib/positions";
 import { saveEmployeeAction, deleteEmployeeAction, importEmployeesAction, bulkUpdateEmployeesAction } from "@/actions/employees";
 import { EmployeeModal } from "./EmployeeModal";
+import { EmployeeHistoryOverlay } from "./EmployeeHistoryOverlay";
+import { EmployeeDocument } from "@/lib/history";
 import Swal from "sweetalert2";
 import { motion, AnimatePresence } from "framer-motion";
 import * as XLSX from 'xlsx';
@@ -34,10 +36,11 @@ import { StandardPagination } from "./ui/StandardPagination";
 
 interface EmployeeManagementProps {
     initialEmployees: EmployeeDisplay[];
+    initialDocuments: EmployeeDocument[];
     positions: Position[];
 }
 
-export function EmployeeManagement({ initialEmployees, positions }: EmployeeManagementProps) {
+export function EmployeeManagement({ initialEmployees, initialDocuments, positions }: EmployeeManagementProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
     const pathname = usePathname();
@@ -55,6 +58,7 @@ export function EmployeeManagement({ initialEmployees, positions }: EmployeeMana
     const [searchTerm, setSearchTerm] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingEmployee, setEditingEmployee] = useState<EmployeeDisplay | null>(null);
+    const [historyEmployee, setHistoryEmployee] = useState<EmployeeDisplay | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // New state for pagination, sorting, and filtering
@@ -706,7 +710,19 @@ export function EmployeeManagement({ initialEmployees, positions }: EmployeeMana
                                                     className="cursor-pointer group/name"
                                                     onClick={() => handleEdit(emp)}
                                                 >
-                                                    <div className="font-bold text-gray-900 group-hover:text-green-600 group-hover/name:underline transition-colors">{emp.name}</div>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="font-bold text-gray-900 group-hover:text-green-600 group-hover/name:underline transition-colors">{emp.name}</div>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setHistoryEmployee(emp);
+                                                            }}
+                                                            className="p-1 text-blue-500 hover:bg-blue-50 rounded-md transition-all opacity-0 group-hover/name:opacity-100"
+                                                            title="Buka Riwayat"
+                                                        >
+                                                            <FileText className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    </div>
                                                     <div
                                                         className="text-xs font-mono text-gray-400 mt-0.5 hover:text-green-500 flex items-center gap-1"
                                                         onClick={(e) => {
@@ -850,6 +866,13 @@ export function EmployeeManagement({ initialEmployees, positions }: EmployeeMana
                                                     <Edit className="w-5 h-5" />
                                                 </button>
                                                 <button
+                                                    onClick={() => setHistoryEmployee(emp)}
+                                                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                    title="Riwayat Dokumen"
+                                                >
+                                                    <FileText className="w-5 h-5" />
+                                                </button>
+                                                <button
                                                     onClick={() => handleDelete(emp.id, emp.name)}
                                                     className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                                     title="Hapus"
@@ -890,6 +913,17 @@ export function EmployeeManagement({ initialEmployees, positions }: EmployeeMana
                 employee={editingEmployee}
                 positions={positions}
             />
+
+            <AnimatePresence>
+                {historyEmployee && (
+                    <EmployeeHistoryOverlay
+                        employee={historyEmployee}
+                        documents={initialDocuments.filter(d => d.employeeId === historyEmployee.id)}
+                        positions={positions}
+                        onClose={() => setHistoryEmployee(null)}
+                    />
+                )}
+            </AnimatePresence>
 
             {/* Bulk Action Bar */}
             <AnimatePresence>
