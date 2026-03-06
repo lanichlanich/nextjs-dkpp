@@ -192,7 +192,7 @@ export function EmployeeHistoryOverlay({ employee, documents, positions, onClose
     }, [documents]);
 
     return (
-        <div className="fixed inset-0 z-40 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
             <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -205,13 +205,13 @@ export function EmployeeHistoryOverlay({ employee, documents, positions, onClose
                 initial={{ scale: 0.95, opacity: 0, y: 20 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.95, opacity: 0, y: 20 }}
-                className="relative w-full max-w-5xl bg-white rounded-[40px] shadow-2xl overflow-hidden flex flex-col h-[90vh]"
+                className="relative w-full max-w-4xl bg-white rounded-[32px] shadow-2xl overflow-hidden flex flex-col h-[85vh]"
             >
                 {/* Header */}
-                <div className="bg-white border-b border-gray-100 p-8 flex items-center justify-between bg-gradient-to-r from-gray-50/50 to-white">
-                    <div className="flex items-center gap-6">
-                        <div className="w-16 h-16 rounded-3xl bg-green-600 flex items-center justify-center text-white shadow-xl shadow-green-100">
-                            <FileText className="w-8 h-8" />
+                <div className="bg-white border-b border-gray-100 p-6 flex items-center justify-between bg-gradient-to-r from-gray-50/50 to-white">
+                    <div className="flex items-center gap-5">
+                        <div className="w-14 h-14 rounded-2xl bg-green-600 flex items-center justify-center text-white shadow-xl shadow-green-100/50">
+                            <FileText className="w-7 h-7" />
                         </div>
                         <div>
                             <h2 className="text-3xl font-black text-gray-900 leading-tight flex items-center gap-3">
@@ -347,7 +347,7 @@ export function EmployeeHistoryOverlay({ employee, documents, positions, onClose
                 {/* Internal Upload Modal */}
                 <AnimatePresence>
                     {showUploadModal && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
                             <motion.div
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
