@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { Plus, Search, Edit, ChevronLeft, ChevronRight, Download, FileSpreadsheet, FileText, ArrowUpDown, Filter, Loader2 } from "lucide-react";
 import { NewsItem } from "@/lib/news";
 import { DeleteNewsButton } from "./DeleteNewsButton";
-import { NewsModal } from "./NewsModal";
+import { NewsEditorOverlay } from "./NewsEditorOverlay";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -149,7 +149,7 @@ export function NewsManagement({ initialNews, canManage = true }: NewsManagement
         setIsModalOpen(true);
     };
 
-    const closeModal = () => {
+    const closeOverlay = () => {
         setIsModalOpen(false);
         setSelectedNews(null);
     };
@@ -385,9 +385,9 @@ export function NewsManagement({ initialNews, canManage = true }: NewsManagement
                 />
             </div>
 
-            <NewsModal
+            <NewsEditorOverlay
                 isOpen={isModalOpen}
-                onClose={closeModal}
+                onClose={closeOverlay}
                 newsItem={selectedNews}
             />
         </div>
