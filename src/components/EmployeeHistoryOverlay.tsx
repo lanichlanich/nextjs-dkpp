@@ -35,14 +35,15 @@ export function EmployeeHistoryOverlay({ employee, documents, positions, onClose
     const [showUploadModal, setShowUploadModal] = useState(false);
     const [editingDocument, setEditingDocument] = useState<EmployeeDocument | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [documentType, setDocumentType] = useState<'SK_CPNS' | 'SK_PNS' | 'SK_PPPK' | 'SKP' | 'SK_JABATAN' | 'PAKTA_INTEGRITAS' | null>(null);
+    const [documentType, setDocumentType] = useState<'SK_CPNS' | 'SK_PNS' | 'SK_PPPK' | 'SKP' | 'SK_JABATAN' | 'PAKTA_INTEGRITAS' | 'SK_KENAIKAN_PANGKAT' | null>(null);
     const [formData, setFormData] = useState({
         nomorSurat: '',
         tanggalSurat: '',
         tanggalMulai: '',
         tahunSKP: '2026',
         predikat: '',
-        positionId: ''
+        positionId: '',
+        golongan: ''
     });
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
@@ -75,6 +76,7 @@ export function EmployeeHistoryOverlay({ employee, documents, positions, onClose
             case 'SK_PPPK': return `sk_pppk_${nip}.pdf`;
             case 'SKP': return `skp_${nip}_${formData.tahunSKP || 'tahun'}.pdf`;
             case 'SK_JABATAN': return `sk_jabatan_${nip}.pdf`;
+            case 'SK_KENAIKAN_PANGKAT': return `sk_kenaikan_pangkat_${nip}.pdf`;
             case 'PAKTA_INTEGRITAS': return `${nip}_${employee.name.replace(/\s+/g, '_')}.pdf`;
             default: return '';
         }
@@ -115,6 +117,9 @@ export function EmployeeHistoryOverlay({ employee, documents, positions, onClose
                 if (documentType === 'SK_JABATAN') {
                     formDataToSend.append('positionId', formData.positionId);
                 }
+                if (documentType === 'SK_KENAIKAN_PANGKAT') {
+                    formDataToSend.append('golongan', formData.golongan);
+                }
             }
 
             const result = await saveDocumentAction(formDataToSend);
@@ -131,7 +136,7 @@ export function EmployeeHistoryOverlay({ employee, documents, positions, onClose
                     showConfirmButton: false,
                     timer: 3000
                 });
-                setFormData({ nomorSurat: '', tanggalSurat: '', tanggalMulai: '', tahunSKP: '2026', predikat: '', positionId: '' });
+                setFormData({ nomorSurat: '', tanggalSurat: '', tanggalMulai: '', tahunSKP: '2026', predikat: '', positionId: '', golongan: '' });
                 setSelectedFile(null);
                 setShowUploadModal(false);
                 setDocumentType(null);
@@ -154,7 +159,8 @@ export function EmployeeHistoryOverlay({ employee, documents, positions, onClose
             tanggalMulai: doc.tanggalMulai ? new Date(doc.tanggalMulai).toISOString().split('T')[0] : '',
             tahunSKP: doc.tahunSKP || '',
             predikat: doc.predikat || '',
-            positionId: doc.positionId || ''
+            positionId: doc.positionId || '',
+            golongan: doc.golongan || ''
         });
         setSelectedFile(null);
         setShowUploadModal(true);
@@ -240,7 +246,7 @@ export function EmployeeHistoryOverlay({ employee, documents, positions, onClose
                             onClick={() => {
                                 setEditingDocument(null);
                                 setDocumentType(null);
-                                setFormData({ nomorSurat: '', tanggalSurat: '', tanggalMulai: '', tahunSKP: '2026', predikat: '', positionId: '' });
+                                setFormData({ nomorSurat: '', tanggalSurat: '', tanggalMulai: '', tahunSKP: '2026', predikat: '', positionId: '', golongan: '' });
                                 setSelectedFile(null);
                                 setShowUploadModal(true);
                             }}
@@ -295,6 +301,12 @@ export function EmployeeHistoryOverlay({ employee, documents, positions, onClose
                                                                         <>
                                                                             <span className="w-1 h-1 rounded-full bg-gray-300" />
                                                                             <span className="text-gray-400 italic font-medium lowercase">({doc.position?.namaJabatan})</span>
+                                                                        </>
+                                                                    )}
+                                                                    {doc.documentType === 'SK_KENAIKAN_PANGKAT' && doc.golongan && (
+                                                                        <>
+                                                                            <span className="w-1 h-1 rounded-full bg-gray-300" />
+                                                                            <span className="text-gray-400 font-medium">Gol: {doc.golongan}</span>
                                                                         </>
                                                                     )}
                                                                 </p>
@@ -386,6 +398,7 @@ export function EmployeeHistoryOverlay({ employee, documents, positions, onClose
                                                 { type: 'SK_PPPK', label: 'SK PPPK' },
                                                 { type: 'SKP', label: 'SKP' },
                                                 { type: 'SK_JABATAN', label: 'SK Jabatan' },
+                                                { type: 'SK_KENAIKAN_PANGKAT', label: 'SK Kenaikan Pangkat' },
                                                 { type: 'PAKTA_INTEGRITAS', label: 'Pakta Integritas' }
                                             ].map(({ type, label }) => (
                                                 <button
@@ -468,6 +481,29 @@ export function EmployeeHistoryOverlay({ employee, documents, positions, onClose
                                                                     {positions.map(pos => (
                                                                         <option key={pos.id} value={pos.id}>{pos.namaJabatan}</option>
                                                                     ))}
+                                                                </select>
+                                                            </div>
+                                                        )}
+                                                        {documentType === 'SK_KENAIKAN_PANGKAT' && (
+                                                            <div>
+                                                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Pangkat/Golongan</label>
+                                                                <select
+                                                                    value={formData.golongan}
+                                                                    onChange={(e) => setFormData({ ...formData, golongan: e.target.value })}
+                                                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition-all font-bold text-gray-900"
+                                                                    required
+                                                                >
+                                                                    <option value="">Pilih Golongan...</option>
+                                                                    <optgroup label="PNS">
+                                                                        {["I/a", "I/b", "I/c", "I/d", "II/a", "II/b", "II/c", "II/d", "III/a", "III/b", "III/c", "III/d", "IV/a", "IV/b", "IV/c", "IV/d", "IV/e"].map(g => (
+                                                                            <option key={g} value={g}>{g}</option>
+                                                                        ))}
+                                                                    </optgroup>
+                                                                    <optgroup label="PPPK">
+                                                                        {["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII"].map(g => (
+                                                                            <option key={g} value={g}>Golongan {g}</option>
+                                                                        ))}
+                                                                    </optgroup>
                                                                 </select>
                                                             </div>
                                                         )}

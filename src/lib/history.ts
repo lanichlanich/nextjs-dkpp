@@ -3,13 +3,14 @@ import prisma from './prisma';
 export interface EmployeeDocument {
     id: string;
     employeeId: string;
-    documentType: 'SK_CPNS' | 'SK_PNS' | 'SK_PPPK' | 'SKP' | 'SK_JABATAN' | 'PAKTA_INTEGRITAS';
+    documentType: 'SK_CPNS' | 'SK_PNS' | 'SK_PPPK' | 'SKP' | 'SK_JABATAN' | 'PAKTA_INTEGRITAS' | 'SK_KENAIKAN_PANGKAT';
     nomorSurat?: string | null;
     tanggalSurat?: Date | null;
     tanggalMulai?: Date | null;
     tahunSKP?: string | null;
     predikat?: string | null;
     positionId?: string | null;
+    golongan?: string | null;
     position?: {
         id: string;
         namaJabatan: string;
@@ -24,13 +25,14 @@ export interface EmployeeDocument {
 export interface DocumentInput {
     id?: string;
     employeeId: string;
-    documentType: 'SK_CPNS' | 'SK_PNS' | 'SK_PPPK' | 'SKP' | 'SK_JABATAN' | 'PAKTA_INTEGRITAS';
+    documentType: 'SK_CPNS' | 'SK_PNS' | 'SK_PPPK' | 'SKP' | 'SK_JABATAN' | 'PAKTA_INTEGRITAS' | 'SK_KENAIKAN_PANGKAT';
     nomorSurat?: string;
     tanggalSurat?: Date;
     tanggalMulai?: Date;
     tahunSKP?: string;
     predikat?: string;
     positionId?: string;
+    golongan?: string;
     filePath: string;
     fileName: string;
 }
@@ -120,6 +122,7 @@ export async function saveDocument(data: DocumentInput): Promise<EmployeeDocumen
                     tahunSKP: data.tahunSKP || null,
                     predikat: data.predikat || null,
                     positionId: data.positionId || null,
+                    golongan: data.golongan || null,
                     filePath: data.filePath,
                     fileName: data.fileName
                 },
@@ -132,6 +135,14 @@ export async function saveDocument(data: DocumentInput): Promise<EmployeeDocumen
         // Sync employee position if this is an SK_JABATAN
         if (data.documentType === 'SK_JABATAN') {
             await syncEmployeePositionWithLatestSK(data.employeeId);
+        }
+
+        // Sync employee golongan if this is an SK_KENAIKAN_PANGKAT
+        if (data.documentType === 'SK_KENAIKAN_PANGKAT' && data.golongan) {
+            await prisma.employee.update({
+                where: { id: data.employeeId },
+                data: { golongan: data.golongan }
+            });
         }
 
         return result as EmployeeDocument;

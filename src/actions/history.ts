@@ -50,6 +50,7 @@ export async function saveDocumentAction(formData: FormData) {
         const tahunSKP = formData.get('tahunSKP') as string;
         const predikat = formData.get('predikat') as string;
         const positionId = formData.get('positionId') as string;
+        const golongan = formData.get('golongan') as string;
 
         // Parse dates only if they exist
         const tanggalSurat = tanggalSuratStr ? new Date(tanggalSuratStr) : undefined;
@@ -66,6 +67,7 @@ export async function saveDocumentAction(formData: FormData) {
             tahunSKP: tahunSKP || undefined,
             predikat: predikat || undefined,
             positionId: positionId || undefined,
+            golongan: golongan || undefined,
             filePath: fileUrl,
             fileName: fileName || existingDoc?.fileName || ""
         });

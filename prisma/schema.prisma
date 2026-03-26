@@ -90,6 +90,7 @@ model EmployeeDocument {
   updatedAt    DateTime  @updatedAt
   predikat     String?
   positionId   String?
+  golongan     String?
   employee     Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   position     Position? @relation(fields: [positionId], references: [id])
 
