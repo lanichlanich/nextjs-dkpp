@@ -2,14 +2,36 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Position } from "@/lib/positions";
-import { Briefcase, Plus, Pencil, Trash2, Search, FileUp, FileDown, Download } from "lucide-react";
+import { Briefcase, Plus, Pencil, Trash2, Search, FileUp, FileDown, Download, MoreHorizontal } from "lucide-react";
 import { PositionModal } from "./PositionModal";
-import { StandardPagination } from "./ui/StandardPagination";
 import { savePositionAction, deletePositionAction, importPositionsAction } from "@/actions/position-actions";
-import Swal from "sweetalert2";
-import { motion } from "framer-motion";
+import { toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
 import * as XLSX from 'xlsx';
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
+import { Card, CardContent } from "./ui/card";
+import { Badge } from "./ui/badge";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "./ui/alert-dialog";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import { cn } from "@/lib/utils";
+import { StandardPagination } from "./ui/StandardPagination";
 
 interface PositionManagementProps {
     initialPositions: Position[];
@@ -24,6 +46,9 @@ export function PositionManagement({ initialPositions }: PositionManagementProps
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [positionToDelete, setPositionToDelete] = useState<Position | null>(null);
+    const [isActionLoading, setIsActionLoading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Pagination
@@ -80,57 +105,42 @@ export function PositionManagement({ initialPositions }: PositionManagementProps
     };
 
     const handleSave = async (data: Partial<Position>) => {
-        const result = await savePositionAction(data as any);
+        try {
+            const result = await savePositionAction(data as any);
 
-        if ('error' in result) {
-            Swal.fire("Error", result.error, "error");
-            throw new Error(result.error);
+            if ('error' in result) {
+                toast.error(result.error as string);
+                throw new Error(result.error as string);
+            }
+
+            toast.success(`Jabatan berhasil ${data.id ? 'diupdate' : 'ditambahkan'}`);
+            router.refresh();
+            setIsModalOpen(false);
+        } catch (error: any) {
+            console.error("Save error:", error);
         }
-
-        Swal.fire({
-            icon: "success",
-            title: "Berhasil",
-            text: `Jabatan berhasil ${data.id ? 'diupdate' : 'ditambahkan'}`,
-            toast: true,
-            position: "top-end",
-            showConfirmButton: false,
-            timer: 3000
-        });
-
-        router.refresh();
-        setIsModalOpen(false);
     };
 
-    const handleDelete = async (position: Position) => {
-        const result = await Swal.fire({
-            title: "Hapus Jabatan?",
-            text: `Jabatan "${position.namaJabatan}" akan dihapus permanen`,
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonColor: "#dc2626",
-            cancelButtonColor: "#6b7280",
-            confirmButtonText: "Ya, Hapus",
-            cancelButtonText: "Batal"
-        });
+    const confirmDelete = async () => {
+        if (!positionToDelete) return;
 
-        if (result.isConfirmed) {
-            const deleteResult = await deletePositionAction(position.id);
+        setIsActionLoading(true);
+        const result = await deletePositionAction(positionToDelete.id);
 
-            if ('error' in deleteResult) {
-                Swal.fire("Error", deleteResult.error, "error");
-            } else {
-                Swal.fire({
-                    icon: "success",
-                    title: "Terhapus",
-                    text: "Jabatan berhasil dihapus",
-                    toast: true,
-                    position: "top-end",
-                    showConfirmButton: false,
-                    timer: 3000
-                });
-                router.refresh();
-            }
+        if ('error' in result) {
+            toast.error(result.error as string);
+        } else {
+            toast.success("Jabatan berhasil dihapus");
+            router.refresh();
         }
+        setIsActionLoading(false);
+        setIsDeleteDialogOpen(false);
+        setPositionToDelete(null);
+    };
+
+    const handleDeleteClick = (position: Position) => {
+        setPositionToDelete(position);
+        setIsDeleteDialogOpen(true);
     };
 
     const getDetailColumn = (position: Position) => {
@@ -202,7 +212,7 @@ export function PositionManagement({ initialPositions }: PositionManagementProps
             const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet);
 
             if (jsonData.length === 0) {
-                Swal.fire("Error", "File Excel kosong atau tidak valid", "error");
+                toast.error("File Excel kosong atau tidak valid");
                 return;
             }
 
@@ -216,24 +226,20 @@ export function PositionManagement({ initialPositions }: PositionManagementProps
             })).filter(item => item.namaJabatan && item.jenisJabatan);
 
             if (formattedData.length === 0) {
-                Swal.fire("Error", "Tidak ada data valid untuk diimpor", "error");
+                toast.error("Tidak ada data valid untuk diimpor");
                 return;
             }
 
-            Swal.fire({
-                title: "Mengimpor Data...",
-                html: `Sedang mengimpor <b>${formattedData.length}</b> data jabatan.`,
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
+            const loadingToast = toast.loading(`Mengimpor ${formattedData.length} data jabatan...`);
 
             const result = await importPositionsAction(formattedData);
 
+            toast.dismiss(loadingToast);
+
             if ("error" in result) {
-                Swal.fire("Error", result.error, "error");
+                toast.error(result.error as string);
             } else {
+                toast.success("Data jabatan berhasil diimpor");
                 window.location.reload();
             }
         };
@@ -243,175 +249,199 @@ export function PositionManagement({ initialPositions }: PositionManagementProps
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-8 text-white shadow-lg">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <Briefcase className="w-10 h-10" />
-                        <div>
-                            <h1 className="text-3xl font-black">Daftar Jabatan</h1>
-                            <p className="text-blue-100 mt-1">Kelola data jabatan organisasi</p>
+            <Card className="overflow-hidden border-0 shadow-2xl bg-gradient-to-br from-indigo-700 via-indigo-800 to-slate-900">
+                <CardContent className="p-8">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div className="flex items-center gap-5">
+                            <div className="p-4 bg-white/10 backdrop-blur-md rounded-2xl shadow-inner border border-white/20">
+                                <Briefcase className="w-10 h-10 text-white" />
+                            </div>
+                            <div>
+                                <h1 className="text-4xl font-black text-white tracking-tight">Daftar Jabatan</h1>
+                                <p className="text-indigo-200 mt-1 font-bold flex items-center gap-2">
+                                    <span className="w-2 h-2 bg-indigo-400 rounded-full animate-pulse" />
+                                    Total {positions.length} jabatan terdaftar dalam sistem
+                                </p>
+                            </div>
                         </div>
+                        <Button
+                            onClick={handleAdd}
+                            size="lg"
+                            className="bg-white text-indigo-700 hover:bg-slate-50 font-black px-8 py-6 rounded-2xl shadow-xl transition-all hover:scale-105"
+                        >
+                            <Plus className="mr-2 h-6 w-6" />
+                            TAMBAH JABATAN
+                        </Button>
                     </div>
-                    <button
-                        onClick={handleAdd}
-                        className="flex items-center gap-2 bg-white text-blue-600 px-6 py-3 rounded-xl font-black text-sm uppercase tracking-wide hover:bg-blue-50 transition-all shadow-lg"
-                    >
-                        <Plus className="w-5 h-5" />
-                        Tambah Jabatan
-                    </button>
-                </div>
+                </CardContent>
+            </Card>
+
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                {/* Search & Stats */}
+                <Card className="lg:col-span-3 border-slate-200/60 shadow-sm overflow-hidden bg-white/50 backdrop-blur-sm">
+                    <CardContent className="p-4">
+                        <div className="relative group">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+                            <Input
+                                type="text"
+                                placeholder="Cari nama jabatan atau jenis..."
+                                value={searchTerm}
+                                onChange={(e) => handleSearchChange(e.target.value)}
+                                className="pl-12 pr-4 h-12 bg-slate-50 border-slate-200/60 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-900 font-bold placeholder:text-slate-400 placeholder:font-normal"
+                            />
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Quick Actions */}
+                <Card className="border-slate-200/60 shadow-sm bg-white/50 backdrop-blur-sm">
+                    <CardContent className="p-4 flex gap-2">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger render={
+                                <Button variant="outline" className="flex-1 font-bold border-slate-200 text-slate-600 rounded-xl h-12">
+                                    <FileDown className="mr-2 h-4 w-4" />
+                                    Opsi Data
+                                </Button>
+                            } />
+                            <DropdownMenuContent align="end" className="w-56 rounded-xl border-slate-200 shadow-xl">
+                                <DropdownMenuItem onClick={handleExportExcel} className="font-bold cursor-pointer py-3 rounded-lg text-emerald-600 focus:text-emerald-700 focus:bg-emerald-50">
+                                    <FileDown className="mr-2 h-4 w-4" />
+                                    Export ke Excel
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => fileInputRef.current?.click()} className="font-bold cursor-pointer py-3 rounded-lg text-indigo-600 focus:text-indigo-700 focus:bg-indigo-50">
+                                    <FileUp className="mr-2 h-4 w-4" />
+                                    Import Excel
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={handleDownloadTemplate} className="font-bold cursor-pointer py-3 rounded-lg text-slate-600 focus:text-slate-700 focus:bg-slate-50">
+                                    <Download className="mr-2 h-4 w-4" />
+                                    Unduh Template
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleImportExcel}
+                            accept=".xlsx, .xls"
+                            className="hidden"
+                        />
+                    </CardContent>
+                </Card>
             </div>
 
-            {/* Search */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <div className="relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                        type="text"
-                        placeholder="Cari nama jabatan atau jenis..."
-                        value={searchTerm}
-                        onChange={(e) => handleSearchChange(e.target.value)}
-                        className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-gray-900 font-medium"
-                    />
-                </div>
-                {searchTerm && (
-                    <p className="text-xs text-gray-500 mt-2">
-                        Menampilkan {filteredPositions.length} dari {positions.length} jabatan
-                    </p>
-                )}
-            </div>
+            {/* Table Container */}
+            <Card className="border-slate-200/60 shadow-xl overflow-hidden bg-white">
+                <CardContent className="p-0">
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader className="bg-slate-50/80 border-b border-slate-200">
+                                <TableRow>
+                                    <TableHead className="w-16 pl-6 text-[10px] font-black uppercase tracking-widest text-slate-500">No</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500">Nama Jabatan</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-center">Jenis</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500">Detail (Eselon/Jenjang)</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-center">BUP</TableHead>
+                                    <TableHead className="w-24 text-right pr-6 text-[10px] font-black uppercase tracking-widest text-slate-500">Aksi</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                <AnimatePresence mode="popLayout">
+                                    {filteredPositions.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={6} className="h-64 text-center">
+                                                <div className="flex flex-col items-center justify-center space-y-3 opacity-60">
+                                                    <div className="p-4 bg-slate-50 rounded-full">
+                                                        <Briefcase className="w-12 h-12 text-slate-300" />
+                                                    </div>
+                                                    <p className="text-slate-400 font-bold italic">
+                                                        {searchTerm ? "Tidak ada jabatan yang cocok dengan pencarian" : "Belum ada data jabatan terdaftar"}
+                                                    </p>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : (
+                                        currentItems.map((position, index) => (
+                                            <motion.tr
+                                                key={position.id}
+                                                layout
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                exit={{ opacity: 0 }}
+                                                className="group hover:bg-slate-50/50 transition-colors border-b border-slate-100 last:border-0"
+                                            >
+                                                <TableCell className="pl-6 font-bold text-slate-400 text-xs">
+                                                    {indexOfFirstItem + index + 1}
+                                                </TableCell>
+                                                <TableCell className="py-5">
+                                                    <p className="font-black text-slate-900 tracking-tight text-sm uppercase">
+                                                        {position.namaJabatan}
+                                                    </p>
+                                                </TableCell>
+                                                <TableCell className="text-center">
+                                                    <Badge
+                                                        variant={
+                                                            position.jenisJabatan === 'Struktural' ? 'default' :
+                                                                position.jenisJabatan === 'Fungsional' ? 'success' : 'warning'
+                                                        }
+                                                        className={cn(
+                                                            "rounded-md font-black text-[9px] uppercase tracking-tighter px-2",
+                                                            position.jenisJabatan === 'Struktural' && "bg-indigo-100 text-indigo-700 hover:bg-indigo-100",
+                                                            position.jenisJabatan === 'Fungsional' && "bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-0",
+                                                            position.jenisJabatan === 'Pelaksana' && "bg-amber-100 text-amber-700 hover:bg-amber-100 border-0"
+                                                        )}
+                                                    >
+                                                        {position.jenisJabatan}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell className="text-slate-600 font-bold text-xs italic">
+                                                    {getDetailColumn(position)}
+                                                </TableCell>
+                                                <TableCell className="text-center">
+                                                    <div className="inline-flex items-center gap-1 bg-slate-100 px-2 py-1 rounded-md">
+                                                        <span className="font-black text-slate-900 text-xs">{position.batasUsiaPensiun}</span>
+                                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Thn</span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-right pr-6">
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger render={
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-white hover:shadow-md border border-transparent hover:border-slate-200 transition-all">
+                                                                <MoreHorizontal className="h-4 w-4 text-slate-500" />
+                                                            </Button>
+                                                        } />
+                                                        <DropdownMenuContent align="end" className="w-40 rounded-xl shadow-xl border-slate-200">
+                                                            <DropdownMenuItem onClick={() => handleEdit(position)} className="font-bold py-2 rounded-lg cursor-pointer">
+                                                                <Pencil className="mr-2 h-4 w-4 text-indigo-600" />
+                                                                Edit
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem
+                                                                onClick={() => handleDeleteClick(position)}
+                                                                className="font-bold py-2 rounded-lg cursor-pointer text-rose-600 focus:text-rose-700 focus:bg-rose-50"
+                                                            >
+                                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                                Hapus
+                                                            </DropdownMenuItem>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                </TableCell>
+                                            </motion.tr>
+                                        ))
+                                    )}
+                                </AnimatePresence>
+                            </TableBody>
+                        </Table>
+                    </div>
+                </CardContent>
+            </Card>
 
-            {/* Action Buttons */}
-            <div className="flex flex-wrap gap-3">
-                <button
-                    onClick={handleExportExcel}
-                    className="flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-xl font-bold hover:bg-green-100 transition-all border border-green-200"
-                >
-                    <FileDown className="w-4 h-4" />
-                    Export Excel
-                </button>
-                <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-xl font-bold hover:bg-blue-100 transition-all border border-blue-200"
-                >
-                    <FileUp className="w-4 h-4" />
-                    Import Excel
-                </button>
-                <button
-                    onClick={handleDownloadTemplate}
-                    className="flex items-center gap-2 px-4 py-2 bg-gray-50 text-gray-700 rounded-xl font-bold hover:bg-gray-100 transition-all border border-gray-200"
-                >
-                    <Download className="w-4 h-4" />
-                    Download Template
-                </button>
-                <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleImportExcel}
-                    accept=".xlsx, .xls"
-                    className="hidden"
-                />
-            </div>
-
-            {/* Table */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
-                            <tr>
-                                <th className="px-6 py-4 text-left text-xs font-black text-gray-600 uppercase tracking-widest">
-                                    No
-                                </th>
-                                <th className="px-6 py-4 text-left text-xs font-black text-gray-600 uppercase tracking-widest">
-                                    Nama Jabatan
-                                </th>
-                                <th className="px-6 py-4 text-left text-xs font-black text-gray-600 uppercase tracking-widest">
-                                    Jenis
-                                </th>
-                                <th className="px-6 py-4 text-left text-xs font-black text-gray-600 uppercase tracking-widest">
-                                    Eselon/Jenjang/Jenis
-                                </th>
-                                <th className="px-6 py-4 text-left text-xs font-black text-gray-600 uppercase tracking-widest">
-                                    Batas Pensiun
-                                </th>
-                                <th className="px-6 py-4 text-center text-xs font-black text-gray-600 uppercase tracking-widest">
-                                    Aksi
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {filteredPositions.length === 0 ? (
-                                <tr>
-                                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                                        <Briefcase className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                                        <p className="font-bold">
-                                            {searchTerm ? "Tidak ada jabatan yang cocok" : "Belum ada data jabatan"}
-                                        </p>
-                                    </td>
-                                </tr>
-                            ) : (
-                                currentItems.map((position, index) => (
-                                    <motion.tr
-                                        key={position.id}
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: index * 0.05 }}
-                                        className="hover:bg-blue-50/50 transition-colors"
-                                    >
-                                        <td className="px-6 py-4 text-sm text-gray-600 font-bold">
-                                            {indexOfFirstItem + index + 1}
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-gray-900 font-bold">
-                                            {position.namaJabatan}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`inline-flex px-3 py-1 rounded-full text-xs font-black ${position.jenisJabatan === 'Struktural' ? 'bg-purple-100 text-purple-700' :
-                                                position.jenisJabatan === 'Fungsional' ? 'bg-green-100 text-green-700' :
-                                                    'bg-orange-100 text-orange-700'
-                                                }`}>
-                                                {position.jenisJabatan}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-gray-700 font-medium">
-                                            {getDetailColumn(position)}
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-gray-700 font-bold">
-                                            {position.batasUsiaPensiun} Tahun
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center justify-center gap-2">
-                                                <button
-                                                    onClick={() => handleEdit(position)}
-                                                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                    title="Edit"
-                                                >
-                                                    <Pencil className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(position)}
-                                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                    title="Hapus"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </motion.tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-
-                <StandardPagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={handlePageChange}
-                    totalItems={filteredPositions.length}
-                    itemsPerPage={itemsPerPage}
-                    onLimitChange={handleLimitChange}
-                />
-            </div>
+            <StandardPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={filteredPositions.length}
+                itemsPerPage={itemsPerPage}
+                onLimitChange={handleLimitChange}
+            />
 
             {/* Modal */}
             <PositionModal
@@ -420,6 +450,28 @@ export function PositionManagement({ initialPositions }: PositionManagementProps
                 onSave={handleSave}
                 position={selectedPosition}
             />
+
+            {/* Delete Confirmation */}
+            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <AlertDialogContent className="rounded-2xl border-slate-200">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="text-xl font-black text-slate-900 tracking-tight">Hapus Jabatan?</AlertDialogTitle>
+                        <AlertDialogDescription className="text-sm font-bold text-slate-500">
+                            Anda akan menghapus jabatan <span className="text-slate-900 font-black">{positionToDelete?.namaJabatan}</span> secara permanen. Tindakan ini tidak dapat dibatalkan.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="gap-2 mt-4">
+                        <AlertDialogCancel className="rounded-xl font-bold border-slate-200 text-slate-600">Batal</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={confirmDelete}
+                            disabled={isActionLoading}
+                            className="rounded-xl font-bold bg-rose-600 hover:bg-rose-700 text-white border-0 shadow-lg"
+                        >
+                            {isActionLoading ? "Menghapus..." : "Ya, Hapus Permanen"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

@@ -103,6 +103,7 @@ export async function saveDocument(data: DocumentInput): Promise<EmployeeDocumen
                     tahunSKP: data.tahunSKP || null,
                     predikat: data.predikat || null,
                     positionId: data.positionId || null,
+                    golongan: data.golongan || null,
                     filePath: data.filePath,
                     fileName: data.fileName
                 },
