@@ -1,10 +1,28 @@
 "use client";
-
+import * as React from "react";
 import { useState, useEffect, useRef } from "react";
-import { X, Save, FileText, Hash, Calendar, FileType, Info, Link as LinkIcon, Upload, FileUp } from "lucide-react";
+import { Save, FileText, Hash, Calendar, FileType, Info, Upload, FileUp } from "lucide-react";
 import { JdihDocument } from "@/lib/jdih";
-import { motion, AnimatePresence } from "framer-motion";
-import Swal from "sweetalert2";
+import { toast } from "sonner";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 
 interface JdihModalProps {
     isOpen: boolean;
@@ -64,7 +82,7 @@ export function JdihModal({ isOpen, onClose, onSave, document }: JdihModalProps)
         const file = e.target.files?.[0];
         if (file) {
             if (file.type !== 'application/pdf') {
-                Swal.fire("Gagal", "File harus berformat PDF", "error");
+                toast.error("File harus berformat PDF");
                 return;
             }
             setPdfFile(file);
@@ -75,7 +93,7 @@ export function JdihModal({ isOpen, onClose, onSave, document }: JdihModalProps)
         e.preventDefault();
 
         if (!formData.title || !formData.number || !formData.year) {
-            Swal.fire("Peringatan", "Field Judul, Nomor, dan Tahun harus diisi", "warning");
+            toast.error("Field Judul, Nomor, dan Tahun harus diisi");
             return;
         }
 
@@ -98,159 +116,150 @@ export function JdihModal({ isOpen, onClose, onSave, document }: JdihModalProps)
             await onSave(data);
             onClose();
         } catch (error) {
-            console.error("Save error:", error);
+            toast.error("Gagal menyimpan dokumen hukum");
         } finally {
             setIsSubmitting(false);
         }
     };
 
     return (
-        <AnimatePresence>
-            {isOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden"
-                    >
-                        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-blue-50/50">
-                            <h3 className="text-xl font-extrabold text-gray-900">
-                                {document ? "Edit" : "Tambah"} <span className="text-blue-600">Dokumen Hukum</span>
-                            </h3>
-                            <button
-                                onClick={onClose}
-                                className="p-2 hover:bg-white rounded-full transition-colors text-gray-400 hover:text-gray-600"
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+            <DialogContent className="sm:max-w-[500px] rounded-3xl border-slate-200 shadow-2xl p-0 overflow-hidden max-h-[90vh] overflow-y-auto">
+                <DialogHeader className="bg-slate-50/50 p-6 border-b border-slate-100 sticky top-0 z-10">
+                    <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight">
+                        {document ? "Edit" : "Tambah"} <span className="text-blue-600">Dokumen Hukum</span>
+                    </DialogTitle>
+                </DialogHeader>
+
+                <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                    <div className="space-y-2">
+                        <Label className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                            <FileText className="w-3.5 h-3.5 text-blue-600" />
+                            Judul Dokumen
+                        </Label>
+                        <Textarea
+                            rows={3}
+                            required
+                            value={formData.title}
+                            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, title: e.target.value })}
+                            className="bg-slate-50 border-slate-200 rounded-xl font-bold focus-visible:ring-blue-500/20 resize-none"
+                            placeholder="Contoh: Pembentukan Produk Hukum Daerah..."
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                <FileType className="w-3.5 h-3.5 text-blue-600" />
+                                Jenis Produk Hukum
+                            </Label>
+                            <Select
+                                value={String(formData.type ?? "Peraturan Daerah")}
+                                onValueChange={(val: string | null) => setFormData({ ...formData, type: val as any })}
                             >
-                                <X className="w-5 h-5" />
-                            </button>
+                                <SelectTrigger className="h-11 w-full bg-slate-50 border-slate-200 rounded-xl font-bold focus-visible:ring-blue-500/20">
+                                    <SelectValue placeholder="Pilih Jenis" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {DOCUMENT_TYPES.map(type => (
+                                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
+                        <div className="space-y-2">
+                            <Label className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                <Hash className="w-3.5 h-3.5 text-blue-600" />
+                                Nomor
+                            </Label>
+                            <Input
+                                required
+                                value={formData.number}
+                                onChange={(e) => setFormData({ ...formData, number: e.target.value })}
+                                className="h-11 bg-slate-50 border-slate-200 rounded-xl font-bold focus-visible:ring-blue-500/20"
+                                placeholder="Contoh: 12"
+                            />
+                        </div>
+                    </div>
 
-                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-                                    <FileText className="w-3.5 h-3.5 text-blue-600" />
-                                    Judul Dokumen
-                                </label>
-                                <textarea
-                                    rows={3}
-                                    value={formData.title}
-                                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-gray-900 font-medium resize-none shadow-inner"
-                                    placeholder="Contoh: Pembentukan Produk Hukum Daerah..."
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-                                        <FileType className="w-3.5 h-3.5 text-blue-600" />
-                                        Jenis Produk Hukum
-                                    </label>
-                                    <select
-                                        value={formData.type}
-                                        onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-gray-900 font-bold appearance-none shadow-sm"
-                                    >
-                                        {DOCUMENT_TYPES.map(type => (
-                                            <option key={type} value={type}>{type}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-                                        <Hash className="w-3.5 h-3.5 text-blue-600" />
-                                        Nomor
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={formData.number}
-                                        onChange={(e) => setFormData({ ...formData, number: e.target.value })}
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-gray-900 font-medium shadow-sm"
-                                        placeholder="Contoh: 12"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-                                        <Calendar className="w-3.5 h-3.5 text-blue-600" />
-                                        Tahun
-                                    </label>
-                                    <input
-                                        type="number"
-                                        value={formData.year}
-                                        onChange={(e) => setFormData({ ...formData, year: e.target.value })}
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-gray-900 font-medium shadow-sm"
-                                        placeholder="2024"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-                                        <FileUp className="w-3.5 h-3.5 text-blue-600" />
-                                        Upload PDF
-                                    </label>
-                                    <div
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus-within:ring-2 focus-within:ring-blue-500 outline-none transition-all cursor-pointer hover:bg-white overflow-hidden shadow-sm flex items-center gap-2"
-                                    >
-                                        <Upload className={`w-4 h-4 ${pdfFile ? "text-blue-600" : "text-gray-400"}`} />
-                                        <span className={`text-sm truncate flex-1 font-bold ${pdfFile ? "text-blue-700" : (formData.filePath ? "text-green-600" : "text-gray-500")}`}>
-                                            {pdfFile ? pdfFile.name : (formData.filePath ? "✅ PDF Terupload" : "Pilih file PDF...")}
-                                        </span>
-                                        <input
-                                            ref={fileInputRef}
-                                            type="file"
-                                            accept="application/pdf"
-                                            onChange={handleFileChange}
-                                            className="hidden"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-                                    <Info className="w-3.5 h-3.5 text-blue-600" />
-                                    Keterangan Ringkas
-                                </label>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                <Calendar className="w-3.5 h-3.5 text-blue-600" />
+                                Tahun
+                            </Label>
+                            <Input
+                                type="number"
+                                required
+                                value={formData.year}
+                                onChange={(e) => setFormData({ ...formData, year: e.target.value })}
+                                className="h-11 bg-slate-50 border-slate-200 rounded-xl font-bold focus-visible:ring-blue-500/20"
+                                placeholder="2024"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                <FileUp className="w-3.5 h-3.5 text-blue-600" />
+                                Upload PDF
+                            </Label>
+                            <div
+                                onClick={() => fileInputRef.current?.click()}
+                                className="h-11 w-full px-4 flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-100 transition-colors group"
+                            >
+                                <Upload className={cn("w-4 h-4 transition-colors", pdfFile ? "text-blue-600" : "text-slate-400 group-hover:text-blue-500")} />
+                                <span className={cn("text-sm truncate flex-1 font-bold", pdfFile ? "text-blue-700" : (formData.filePath ? "text-green-600" : "text-slate-500"))}>
+                                    {pdfFile ? pdfFile.name : (formData.filePath ? "✅ PDF Terupload" : "Pilih file PDF...")}
+                                </span>
                                 <input
-                                    type="text"
-                                    value={formData.description || ""}
-                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-gray-900 font-medium shadow-sm"
-                                    placeholder="Tentang regulasi ini..."
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="application/pdf"
+                                    onChange={handleFileChange}
+                                    className="hidden"
                                 />
                             </div>
+                        </div>
+                    </div>
 
-                            <div className="pt-4 flex items-center justify-end gap-3">
-                                <button
-                                    type="button"
-                                    onClick={onClose}
-                                    className="px-5 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
-                                >
-                                    Batal
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={isSubmitting}
-                                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-2.5 rounded-xl font-black text-sm uppercase tracking-wide transition-all shadow-lg shadow-blue-200 disabled:opacity-50"
-                                >
-                                    {isSubmitting ? (
-                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                    ) : (
-                                        <>
-                                            <Save className="w-5 h-5" />
-                                            Simpan
-                                        </>
-                                    )}
-                                </button>
-                            </div>
-                        </form>
-                    </motion.div>
-                </div>
-            )}
-        </AnimatePresence>
+                    <div className="space-y-2">
+                        <Label className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                            <Info className="w-3.5 h-3.5 text-blue-600" />
+                            Keterangan Ringkas
+                        </Label>
+                        <Input
+                            value={formData.description || ""}
+                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                            className="h-11 bg-slate-50 border-slate-200 rounded-xl font-bold focus-visible:ring-blue-500/20"
+                            placeholder="Tentang regulasi ini..."
+                        />
+                    </div>
+
+                    <DialogFooter className="pt-6 border-t border-slate-50 gap-3">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={onClose}
+                            className="h-11 flex-1 rounded-xl font-black text-slate-500 hover:bg-slate-100"
+                        >
+                            BATAL
+                        </Button>
+                        <Button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="h-11 flex-1 bg-slate-900 hover:bg-slate-800 text-white font-black rounded-xl shadow-2xl transition-all active:scale-95 disabled:opacity-50"
+                        >
+                            {isSubmitting ? (
+                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            ) : (
+                                <span className="flex items-center gap-2">
+                                    <Save className="w-4 h-4" />
+                                    SIMPAN
+                                </span>
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
     );
 }

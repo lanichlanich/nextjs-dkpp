@@ -1,10 +1,26 @@
 "use client";
-
+import * as React from "react";
 import { useState, useEffect } from "react";
-import { X, Save, Briefcase } from "lucide-react";
+import { Save, Briefcase } from "lucide-react";
 import { Position } from "@/lib/positions";
-import { motion, AnimatePresence } from "framer-motion";
-import Swal from "sweetalert2";
+import { toast } from "sonner";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 interface PositionModalProps {
     isOpen: boolean;
@@ -43,209 +59,185 @@ export function PositionModal({ isOpen, onClose, onSave, position }: PositionMod
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setIsSubmitting(true);
 
+        if (!formData.namaJabatan) {
+            toast.error("Nama Jabatan harus diisi");
+            return;
+        }
+
+        setIsSubmitting(true);
         try {
             await onSave(formData);
             onClose();
         } catch (error) {
-            Swal.fire("Error", "Gagal menyimpan jabatan", "error");
+            toast.error("Gagal menyimpan jabatan");
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    const eselonOptions = [
-        "I.a", "I.b", "II.a", "II.b", "III.a", "III.b", "IV.a", "IV.b"
-    ];
-
-    const jenjangFungsionalOptions = [
-        "Ahli Pertama", "Ahli Muda", "Ahli Madya", "Ahli Utama",
-        "Pemula", "Terampil", "Mahir", "Penyelia"
-    ];
-
-    const jenisPelaksanaOptions = [
-        "Kelerek", "Operator", "Teknisi"
-    ];
+    const eselonOptions = ["I.a", "I.b", "II.a", "II.b", "III.a", "III.b", "IV.a", "IV.b"];
+    const jenjangFungsionalOptions = ["Ahli Pertama", "Ahli Muda", "Ahli Madya", "Ahli Utama", "Pemula", "Terampil", "Mahir", "Penyelia"];
+    const jenisPelaksanaOptions = ["Kelerek", "Operator", "Teknisi"];
 
     return (
-        <AnimatePresence>
-            {isOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    {/* Backdrop */}
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        onClick={onClose}
-                        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-                    />
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+            <DialogContent className="sm:max-w-[500px] rounded-3xl border-slate-200 shadow-2xl p-0 overflow-hidden">
+                <DialogHeader className="bg-slate-50/50 p-6 border-b border-slate-100 sticky top-0 z-10">
+                    <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight">
+                        {position ? "Edit" : "Tambah"} <span className="text-blue-600">Jabatan</span>
+                    </DialogTitle>
+                </DialogHeader>
 
-                    {/* Modal */}
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                        className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto"
-                    >
-                        {/* Header */}
-                        <div className="sticky top-0 z-10 flex items-center justify-between p-6 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-2xl">
-                            <div className="flex items-center gap-3">
-                                <Briefcase className="w-6 h-6" />
-                                <h2 className="text-xl font-black">
-                                    {position ? "Edit Jabatan" : "Tambah Jabatan"}
-                                </h2>
-                            </div>
-                            <button
-                                onClick={onClose}
-                                className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                    <div className="space-y-2">
+                        <Label className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                            <Briefcase className="w-3.5 h-3.5 text-blue-600" />
+                            Nama Jabatan
+                        </Label>
+                        <Input
+                            required
+                            value={formData.namaJabatan}
+                            onChange={(e) => setFormData({ ...formData, namaJabatan: e.target.value })}
+                            className="h-11 bg-slate-50 border-slate-200 rounded-xl font-bold focus-visible:ring-blue-500/20"
+                            placeholder="Contoh: Kepala Biro..."
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                            <Briefcase className="w-3.5 h-3.5 text-blue-600" />
+                            Jenis Jabatan
+                        </Label>
+                        <Select
+                            value={String(formData.jenisJabatan ?? "Struktural")}
+                            onValueChange={(val: string | null) => setFormData({
+                                ...formData,
+                                jenisJabatan: val as any,
+                                eselon: undefined,
+                                jenjangFungsional: undefined,
+                                jenisPelaksana: undefined
+                            })}
+                        >
+                            <SelectTrigger className="h-11 w-full bg-slate-50 border-slate-200 rounded-xl font-bold focus-visible:ring-blue-500/20">
+                                <SelectValue placeholder="Pilih Jenis" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Struktural">Struktural</SelectItem>
+                                <SelectItem value="Fungsional">Fungsional</SelectItem>
+                                <SelectItem value="Pelaksana">Pelaksana</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    {formData.jenisJabatan === 'Struktural' && (
+                        <div className="space-y-2">
+                            <Label className="text-xs font-black text-slate-500 uppercase tracking-widest">
+                                Eselon
+                            </Label>
+                            <Select
+                                value={String(formData.eselon ?? "")}
+                                onValueChange={(val: string | null) => setFormData({ ...formData, eselon: val || undefined })}
                             >
-                                <X className="w-5 h-5" />
-                            </button>
+                                <SelectTrigger className="h-11 w-full bg-slate-50 border-slate-200 rounded-xl font-bold focus-visible:ring-blue-500/20">
+                                    <SelectValue placeholder="-- Pilih Eselon --" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {eselonOptions.map(opt => (
+                                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
+                    )}
 
-                        {/* Form */}
-                        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                            {/* Nama Jabatan */}
-                            <div>
-                                <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">
-                                    Nama Jabatan
-                                </label>
-                                <input
-                                    type="text"
-                                    value={formData.namaJabatan}
-                                    onChange={(e) => setFormData({ ...formData, namaJabatan: e.target.value })}
-                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-gray-900 font-medium"
-                                    required
-                                />
-                            </div>
+                    {formData.jenisJabatan === 'Fungsional' && (
+                        <div className="space-y-2">
+                            <Label className="text-xs font-black text-slate-500 uppercase tracking-widest">
+                                Jenjang Fungsional
+                            </Label>
+                            <Select
+                                value={String(formData.jenjangFungsional ?? "")}
+                                onValueChange={(val: string | null) => setFormData({ ...formData, jenjangFungsional: val || undefined })}
+                            >
+                                <SelectTrigger className="h-11 w-full bg-slate-50 border-slate-200 rounded-xl font-bold focus-visible:ring-blue-500/20">
+                                    <SelectValue placeholder="-- Pilih Jenjang --" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {jenjangFungsionalOptions.map(opt => (
+                                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
 
-                            {/* Jenis Jabatan */}
-                            <div>
-                                <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">
-                                    Jenis Jabatan
-                                </label>
-                                <select
-                                    value={formData.jenisJabatan}
-                                    onChange={(e) => setFormData({
-                                        ...formData,
-                                        jenisJabatan: e.target.value as any,
-                                        eselon: undefined,
-                                        jenjangFungsional: undefined,
-                                        jenisPelaksana: undefined
-                                    })}
-                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-gray-900 font-bold"
-                                    required
-                                >
-                                    <option value="Struktural">Struktural</option>
-                                    <option value="Fungsional">Fungsional</option>
-                                    <option value="Pelaksana">Pelaksana</option>
-                                </select>
-                            </div>
+                    {formData.jenisJabatan === 'Pelaksana' && (
+                        <div className="space-y-2">
+                            <Label className="text-xs font-black text-slate-500 uppercase tracking-widest">
+                                Jenis Pelaksana
+                            </Label>
+                            <Select
+                                value={String(formData.jenisPelaksana ?? "")}
+                                onValueChange={(val: string | null) => setFormData({ ...formData, jenisPelaksana: val || undefined })}
+                            >
+                                <SelectTrigger className="h-11 w-full bg-slate-50 border-slate-200 rounded-xl font-bold focus-visible:ring-blue-500/20">
+                                    <SelectValue placeholder="-- Pilih Jenis --" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {jenisPelaksanaOptions.map(opt => (
+                                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
 
-                            {/* Conditional Fields */}
-                            {formData.jenisJabatan === 'Struktural' && (
-                                <div>
-                                    <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">
-                                        Eselon
-                                    </label>
-                                    <select
-                                        value={formData.eselon || ""}
-                                        onChange={(e) => setFormData({ ...formData, eselon: e.target.value })}
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-gray-900 font-bold"
-                                        required
-                                    >
-                                        <option value="">-- Pilih Eselon --</option>
-                                        {eselonOptions.map(opt => (
-                                            <option key={opt} value={opt}>{opt}</option>
-                                        ))}
-                                    </select>
-                                </div>
+                    <div className="space-y-2">
+                        <Label className="text-xs font-black text-slate-500 uppercase tracking-widest">
+                            Batas Usia Pensiun
+                        </Label>
+                        <Select
+                            value={String(formData.batasUsiaPensiun ?? 58)}
+                            onValueChange={(val: string | null) => setFormData({ ...formData, batasUsiaPensiun: val ? parseInt(val) : 58 })}
+                        >
+                            <SelectTrigger className="h-11 w-full bg-slate-50 border-slate-200 rounded-xl font-bold focus-visible:ring-blue-500/20">
+                                <SelectValue placeholder="Pilih Usia" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="58">58 Tahun</SelectItem>
+                                <SelectItem value="60">60 Tahun</SelectItem>
+                                <SelectItem value="65">65 Tahun</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <DialogFooter className="pt-6 border-t border-slate-50 gap-3">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={onClose}
+                            className="h-11 flex-1 rounded-xl font-black text-slate-500 hover:bg-slate-100"
+                        >
+                            BATAL
+                        </Button>
+                        <Button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="h-11 flex-1 bg-slate-900 hover:bg-slate-800 text-white font-black rounded-xl shadow-2xl transition-all active:scale-95 disabled:opacity-50"
+                        >
+                            {isSubmitting ? (
+                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            ) : (
+                                <span className="flex items-center gap-2">
+                                    <Save className="w-4 h-4" />
+                                    SIMPAN
+                                </span>
                             )}
-
-                            {formData.jenisJabatan === 'Fungsional' && (
-                                <div>
-                                    <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">
-                                        Jenjang Fungsional
-                                    </label>
-                                    <select
-                                        value={formData.jenjangFungsional || ""}
-                                        onChange={(e) => setFormData({ ...formData, jenjangFungsional: e.target.value })}
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-gray-900 font-bold"
-                                        required
-                                    >
-                                        <option value="">-- Pilih Jenjang --</option>
-                                        {jenjangFungsionalOptions.map(opt => (
-                                            <option key={opt} value={opt}>{opt}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            )}
-
-                            {formData.jenisJabatan === 'Pelaksana' && (
-                                <div>
-                                    <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">
-                                        Jenis Pelaksana
-                                    </label>
-                                    <select
-                                        value={formData.jenisPelaksana || ""}
-                                        onChange={(e) => setFormData({ ...formData, jenisPelaksana: e.target.value })}
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-gray-900 font-bold"
-                                        required
-                                    >
-                                        <option value="">-- Pilih Jenis --</option>
-                                        {jenisPelaksanaOptions.map(opt => (
-                                            <option key={opt} value={opt}>{opt}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            )}
-
-                            {/* Batas Usia Pensiun */}
-                            <div>
-                                <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">
-                                    Batas Usia Pensiun
-                                </label>
-                                <select
-                                    value={formData.batasUsiaPensiun}
-                                    onChange={(e) => setFormData({ ...formData, batasUsiaPensiun: parseInt(e.target.value) })}
-                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-gray-900 font-bold"
-                                    required
-                                >
-                                    <option value={58}>58 Tahun</option>
-                                    <option value={60}>60 Tahun</option>
-                                    <option value={65}>65 Tahun</option>
-                                </select>
-                            </div>
-
-                            {/* Actions */}
-                            <div className="flex gap-3 pt-4">
-                                <button
-                                    type="button"
-                                    onClick={onClose}
-                                    className="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-black text-sm uppercase tracking-wide transition-all"
-                                >
-                                    Batal
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={isSubmitting}
-                                    className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-black text-sm uppercase tracking-wide transition-all shadow-lg shadow-blue-200 disabled:opacity-50"
-                                >
-                                    {isSubmitting ? (
-                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                    ) : (
-                                        <>
-                                            <Save className="w-5 h-5" />
-                                            Simpan
-                                        </>
-                                    )}
-                                </button>
-                            </div>
-                        </form>
-                    </motion.div>
-                </div>
-            )}
-        </AnimatePresence>
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
     );
 }

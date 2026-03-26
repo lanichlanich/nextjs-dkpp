@@ -106,7 +106,7 @@ export async function saveDocument(data: DocumentInput): Promise<EmployeeDocumen
                     golongan: data.golongan || null,
                     filePath: data.filePath,
                     fileName: data.fileName
-                },
+                } as any,
                 include: {
                     position: true
                 }
@@ -126,7 +126,7 @@ export async function saveDocument(data: DocumentInput): Promise<EmployeeDocumen
                     golongan: data.golongan || null,
                     filePath: data.filePath,
                     fileName: data.fileName
-                },
+                } as any,
                 include: {
                     position: true
                 }
@@ -224,20 +224,20 @@ export async function syncEmployeeGolonganWithLatestSK(employeeId: string): Prom
             where: {
                 employeeId,
                 documentType: 'SK_KENAIKAN_PANGKAT',
-                golongan: { not: null },
-                NOT: { golongan: "" }
-            },
+                golongan: { not: null } as any,
+                NOT: { golongan: "" } as any
+            } as any,
             orderBy: [
                 { tanggalMulai: 'desc' },
                 { createdAt: 'desc' }
             ]
         });
 
-        if (latestSK && latestSK.golongan) {
+        if (latestSK && (latestSK as any).golongan) {
             // Update the employee's golongan
             await prisma.employee.update({
                 where: { id: employeeId },
-                data: { golongan: latestSK.golongan }
+                data: { golongan: (latestSK as any).golongan }
             });
         }
     } catch (error) {
