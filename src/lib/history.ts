@@ -138,11 +138,8 @@ export async function saveDocument(data: DocumentInput): Promise<EmployeeDocumen
         }
 
         // Sync employee golongan if this is an SK_KENAIKAN_PANGKAT
-        if (data.documentType === 'SK_KENAIKAN_PANGKAT' && data.golongan) {
-            await prisma.employee.update({
-                where: { id: data.employeeId },
-                data: { golongan: data.golongan }
-            });
+        if (data.documentType === 'SK_KENAIKAN_PANGKAT') {
+            await syncEmployeeGolonganWithLatestSK(data.employeeId);
         }
 
         return result as EmployeeDocument;
@@ -164,6 +161,11 @@ export async function deleteDocument(id: string): Promise<void> {
         // If we deleted an SK_JABATAN, we might need to re-sync
         if (doc && doc.documentType === 'SK_JABATAN') {
             await syncEmployeePositionWithLatestSK(doc.employeeId);
+        }
+
+        // If we deleted an SK_KENAIKAN_PANGKAT, re-sync golongan
+        if (doc && doc.documentType === 'SK_KENAIKAN_PANGKAT') {
+            await syncEmployeeGolonganWithLatestSK(doc.employeeId);
         }
     } catch (error: any) {
         console.error("Error deleting document:", error);
@@ -211,5 +213,33 @@ export async function syncEmployeePositionWithLatestSK(employeeId: string): Prom
     } catch (error) {
         console.error("Error syncing employee position:", error);
         // Don't throw, just log. We don't want to break the document upload if this fails.
+    }
+}
+
+export async function syncEmployeeGolonganWithLatestSK(employeeId: string): Promise<void> {
+    try {
+        // Find the SK_KENAIKAN_PANGKAT with the latest TMT (tanggalMulai)
+        const latestSK = await prisma.employeeDocument.findFirst({
+            where: {
+                employeeId,
+                documentType: 'SK_KENAIKAN_PANGKAT',
+                golongan: { not: null },
+                NOT: { golongan: "" }
+            },
+            orderBy: [
+                { tanggalMulai: 'desc' },
+                { createdAt: 'desc' }
+            ]
+        });
+
+        if (latestSK && latestSK.golongan) {
+            // Update the employee's golongan
+            await prisma.employee.update({
+                where: { id: employeeId },
+                data: { golongan: latestSK.golongan }
+            });
+        }
+    } catch (error) {
+        console.error("Error syncing employee golongan:", error);
     }
 }
