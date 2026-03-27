@@ -89,7 +89,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
                                                   prose-p:text-gray-800 prose-p:leading-relaxed 
                                                   prose-a:text-green-600 hover:prose-a:text-green-700
                                                   prose-li:text-gray-800 prose-li:leading-relaxed
-                                                  break-words overflow-hidden">
+                                                  break-keep overflow-hidden">
                                     <div dangerouslySetInnerHTML={{ __html: newsItem.content }} />
                                 </article>
 
