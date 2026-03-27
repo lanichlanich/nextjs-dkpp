@@ -40,22 +40,22 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
                             <ChevronRight className="w-4 h-4 mx-2 text-gray-300" />
                             <span className="text-gray-900 line-clamp-1">Detail Berita</span>
                         </nav>
-                        <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900 leading-[1.15] mb-6">
+                        <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900 leading-[1.2] mb-6 tracking-tight">
                             {newsItem.title}
                         </h1>
-                        <div className="flex flex-wrap items-center gap-6 text-sm text-gray-500 font-medium">
+                        <div className="flex flex-wrap items-center gap-6 text-sm text-gray-500 font-medium pb-2">
                             <div className="flex items-center">
-                                <div className="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center mr-3">
+                                <div className="w-8 h-8 rounded-full bg-green-50 text-green-600 flex items-center justify-center mr-3 ring-1 ring-green-100">
                                     <User className="w-4 h-4" />
                                 </div>
-                                <span>Admin DKPP</span>
+                                <span className="text-gray-700 font-semibold">Admin DKPP</span>
                             </div>
-                            <div className="flex items-center">
-                                <Calendar className="w-4 h-4 mr-2 text-green-600" />
+                            <div className="flex items-center text-gray-600">
+                                <Calendar className="w-4 h-4 mr-2 text-green-500" />
                                 {newsItem.date}
                             </div>
-                            <div className="flex items-center">
-                                <Clock className="w-4 h-4 mr-2 text-green-600" />
+                            <div className="flex items-center text-gray-600">
+                                <Clock className="w-4 h-4 mr-2 text-green-500" />
                                 5 Menit Baca
                             </div>
                         </div>
@@ -63,28 +63,35 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
                 </div>
             </div>
 
-            <main className="flex-grow py-12">
+            <main className="flex-grow py-12 bg-white">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex flex-col lg:flex-row gap-12">
+                    <div className="flex flex-col lg:flex-row gap-12 lg:gap-16">
                         {/* Main Content Area */}
                         <div className="lg:w-2/3">
                             <MotionWrapper direction="up" delay={0.2}>
                                 {/* Hero Image */}
-                                <div className="relative w-full aspect-[16/9] rounded-3xl overflow-hidden shadow-2xl mb-10 group">
+                                <div className="relative w-full aspect-[21/9] rounded-2xl overflow-hidden shadow-xl mb-12 group">
                                     <Image
                                         src={newsItem.image}
                                         alt={newsItem.title}
                                         fill
-                                        className="object-cover transform group-hover:scale-105 transition-transform duration-700"
+                                        className="object-cover transform group-hover:scale-105 transition-transform duration-700 ease-out"
                                         priority
                                     />
-                                    <div className="absolute inset-0 ring-1 ring-inset ring-black/10 rounded-3xl"></div>
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                                    <div className="absolute inset-0 ring-1 ring-inset ring-black/10 rounded-2xl"></div>
                                 </div>
 
                                 {/* Article Content */}
-                                <div className="prose prose-xl prose-green max-w-none prose-img:rounded-3xl prose-headings:text-gray-950 prose-headings:font-black prose-p:text-gray-900 prose-p:leading-loose prose-li:text-gray-900 prose-li:leading-loose break-normal overflow-hidden">
+                                <article className="prose prose-lg md:prose-xl prose-green max-w-none 
+                                                  prose-img:rounded-2xl prose-img:shadow-md 
+                                                  prose-headings:font-bold prose-headings:text-gray-900 prose-headings:tracking-tight
+                                                  prose-p:text-gray-800 prose-p:leading-relaxed 
+                                                  prose-a:text-green-600 hover:prose-a:text-green-700
+                                                  prose-li:text-gray-800 prose-li:leading-relaxed
+                                                  break-words overflow-hidden">
                                     <div dangerouslySetInnerHTML={{ __html: newsItem.content }} />
-                                </div>
+                                </article>
 
                                 {/* Social Share */}
                                 <SocialShare title={newsItem.title} url={`/news/${id}`} />
