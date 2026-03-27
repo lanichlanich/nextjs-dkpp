@@ -67,7 +67,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex flex-col lg:flex-row gap-12 lg:gap-16">
                         {/* Main Content Area */}
-                        <div className="lg:w-2/3">
+                        <div className="lg:w-2/3 min-w-0">
                             <MotionWrapper direction="up" delay={0.2}>
                                 {/* Hero Image */}
                                 <div className="relative w-full aspect-[21/9] rounded-2xl overflow-hidden shadow-xl mb-12 group">
@@ -88,7 +88,8 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
                                                   prose-headings:font-bold prose-headings:text-gray-900 prose-headings:tracking-tight
                                                   prose-p:text-gray-800 prose-p:leading-relaxed 
                                                   prose-a:text-green-600 hover:prose-a:text-green-700
-                                                  prose-li:text-gray-800 prose-li:leading-relaxed">
+                                                  prose-li:text-gray-800 prose-li:leading-relaxed
+                                                  break-words overflow-hidden">
                                     <div dangerouslySetInnerHTML={{ __html: newsItem.content }} />
                                 </article>
 
