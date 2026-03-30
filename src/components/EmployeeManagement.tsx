@@ -449,6 +449,14 @@ export function EmployeeManagement({ initialEmployees, initialDocuments, positio
                         <div className="flex items-center gap-2">
                             <Button
                                 variant="outline"
+                                onClick={handleExportExcel}
+                                className="h-11 rounded-xl border-green-200 text-green-700 font-bold hover:bg-green-50 bg-green-50/30"
+                            >
+                                <FileDown className="w-4 h-4 mr-2" />
+                                Export Excel
+                            </Button>
+                            <Button
+                                variant="outline"
                                 onClick={handleDownloadTemplate}
                                 className="h-11 rounded-xl border-slate-200 text-slate-600 font-bold hover:bg-slate-50"
                             >
