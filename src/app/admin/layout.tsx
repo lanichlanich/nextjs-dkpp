@@ -15,7 +15,8 @@ import {
     Briefcase,
     FileText,
     Scale,
-    ChevronRight
+    ChevronRight,
+    Wand2
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -151,6 +152,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             href: "/admin/spt",
             icon: FileText,
             show: true
+        },
+        {
+            name: "Generator PRD",
+            href: "/admin/prd",
+            icon: Wand2,
+            show: currentUser.role === "Admin"
         },
         {
             name: "Pengaturan",
