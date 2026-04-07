@@ -172,7 +172,7 @@ export function PrdGeneratorClient() {
                                         <>
                                             <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                                             MENYUSUN PRD...
-                                        </<>
+                                        </>
                                     ) : (
                                         <>
                                             <Sparkles className="mr-2 h-5 w-5" />
