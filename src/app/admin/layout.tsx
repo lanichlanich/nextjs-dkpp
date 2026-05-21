@@ -16,7 +16,8 @@ import {
     FileText,
     Scale,
     ChevronRight,
-    Wand2
+    Wand2,
+    Sprout
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -157,6 +158,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             name: "Lapor SPT",
             href: "/admin/spt",
             icon: FileText,
+            show: true
+        },
+        {
+            name: "Sektoral Pertanian",
+            href: "/admin/sektoral",
+            icon: Sprout,
             show: true
         },
         {

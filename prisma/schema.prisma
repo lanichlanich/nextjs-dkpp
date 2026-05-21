@@ -127,3 +127,18 @@ model SptReport {
   @@index([nip])
   @@index([year])
 }
+
+model AgricultureProduction {
+  id            String   @id @default(cuid())
+  tahun         Int
+  komoditas     String
+  produksi      Float    // Jumlah Produksi (Ton)
+  produktivitas Float?   // Produktivitas (Ton/Ha)
+  luasPanen     Float?   // Luas Panen (Ha)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([tahun])
+  @@index([komoditas])
+}
+

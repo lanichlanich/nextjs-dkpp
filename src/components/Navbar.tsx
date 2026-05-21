@@ -62,6 +62,10 @@ export function Navbar() {
               JDIH
             </Link>
 
+            <Link href="/sektoral" className="text-gray-700 hover:text-green-600 transition-colors font-medium">
+              Sektoral
+            </Link>
+
             <Link href="/lapor-spt" className="text-gray-700 hover:text-green-600 transition-colors font-medium">
               Lapor SPT
             </Link>
@@ -141,6 +145,14 @@ export function Navbar() {
               onClick={() => setIsOpen(false)}
             >
               JDIH
+            </Link>
+
+            <Link
+              href="/sektoral"
+              className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-green-600 hover:bg-gray-50"
+              onClick={() => setIsOpen(false)}
+            >
+              Sektoral
             </Link>
 
             <Link
